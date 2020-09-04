@@ -323,7 +323,7 @@ class EventFactory(object):
         self.ax.tick_params(axis='z', labelrotation=-3.5)
         self.set_lim()
         self.fig.canvas.draw_idle()
-        print(time.time() - t)
+        #print(time.time() - t)
 
     def draw_mass(self):
         # 在mass上选择一条线，画出该线

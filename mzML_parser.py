@@ -5,6 +5,7 @@ import zlib
 import time
 import numpy as np
 import pickle as pk
+import threading
 
 
 class Peak:
@@ -19,6 +20,22 @@ class Spectrum:
         self.mslevel = mslevel
         self.pepmass = pepmass
 
+
+def add_num_thread(z, peak_list, begin, done):
+    #threading.Lock.acquire()
+    THRESHOLD = 0.01
+    for i in range(len(peak_list)):
+        max_peak = 0
+        if len(peak_list[i][1])==0:
+            continue
+        max_peak = np.max(np.array(peak_list[i][1]))
+        max_peak = max_peak * THRESHOLD
+        for j, tpeak in enumerate(peak_list[i][1]):
+            if tpeak < max_peak:
+                continue
+            t_mass0 = int(round(peak_list[i][0][j]))
+            z[t_mass0][i+begin] += int(tpeak)
+    done[0] +=len(peak_list)
 
 # 用于转换mzML文件的TIC图,谱文件借助于pymzml
 class mzMLWorker(QThread):
@@ -107,7 +124,6 @@ class mzMLWorker(QThread):
                 f.write(str(mz_list[i]) + " " + str(inten_list[i]) + "\n")
 
     def get_dict(self, peaks, tic):
-        THRESHOLD = 0.001
         THRESHOLDMAXPEAK = 0.05
         maxmass = 0
         for i, peak_list in enumerate(peaks):
@@ -121,26 +137,29 @@ class mzMLWorker(QThread):
         y = []
         z = []
         maxmass = int(round(maxmass))
+        L = len(peaks)
         for i in range(maxmass + 1):
             z.append([])
+            for j in range(L):
+                z[-1].append(0)
             x.append(i)
-
-        for i, peak_list in enumerate(peaks):
-            max_peak = 0
-            for tpeak in peak_list[1]:
-                if tpeak > max_peak:
-                    max_peak = tpeak
-
-            max_peak = max_peak * THRESHOLD
+        
+        for i in range(L):
             y.append(i)
-            for k in range(len(z)):
-                z[k].append(0)
-            for j, tpeak in enumerate(peak_list[1]):
-                if tpeak < max_peak:
-                    continue
+        
+        thread_list = []
+        batch = 100
+        done = [0]
+        for i in range(int(len(peaks)/batch)+1):
+            end = min(len(peaks), (i+1)*batch)
+            tthread = threading.Thread(target=add_num_thread, args=(z, peaks[i*batch:end], i*batch, done, ))
+            thread_list.append(tthread)
 
-                t_mass0 = int(round(peak_list[0][j]))
-                z[t_mass0][-1] += int(tpeak)
+        for thread in thread_list:
+            thread.start()
+        
+        while(done[0]!=len(peaks)):
+            time.sleep(0.1)
 
         ret_z = []
         ret_x = []
@@ -163,8 +182,8 @@ class mzMLWorker(QThread):
             ret_x.append(x[i])
 
         ret_z = self.smooth(ret_z)
-        with open('data/dict.pk', 'wb') as f:
-            pk.dump([ret_x, y, ret_z, tic], f)
+        #with open('data/dict.pk', 'wb') as f:
+        #    pk.dump([ret_x, y, ret_z, tic], f)
         return [ret_x, y, ret_z, tic]
 
     def smooth(self, z_data):
