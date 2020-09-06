@@ -259,8 +259,10 @@ def get_merged_peaks(xml_path, start_scan, end_scan):
         else:
             mz_list = []
             inten_list = []
-        for (mz, inten) in zip(mz_list, inten_list):
-            new_mz = round(mz, 4)
+        
+        mz_list = np.round(np.array(mz_list),4)
+        for (new_mz, inten) in zip(mz_list, inten_list):
+            #new_mz = round(mz, 4)
             if new_mz not in mz_inten.keys():
                 mz_inten[new_mz] = 0
             mz_inten[new_mz] += inten
