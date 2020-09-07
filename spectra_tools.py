@@ -72,6 +72,7 @@ class DataWorker(QThread):
                 if str.startswith("ID"):
                     if int(str.split("\t")[1]) % 100 == 0 or int(str.split("\t")[1]) == 2945:
                         self.sinID.emit(int(str.split("\t")[1]))
+                self.content += str
                 # else:
                 #     self.content += str
 
@@ -84,7 +85,7 @@ class DataWorker(QThread):
 
         re, sys.stdout = sys.stdout, stdout
         # data_info = [peaks, max_intensity, exp_isp, label_info, candidate_max_num]
-        # print(re.content)
+        print(re.content)
         self.sinDataInfo.emit(data_info)
 
 

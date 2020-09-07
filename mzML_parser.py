@@ -22,11 +22,11 @@ class Spectrum:
 
 
 def add_num_thread(z, peak_list, begin, done):
-    #threading.Lock.acquire()
+    # threading.Lock.acquire()
     THRESHOLD = 0.01
     for i in range(len(peak_list)):
         max_peak = 0
-        if len(peak_list[i][1])==0:
+        if len(peak_list[i][1]) == 0:
             continue
         max_peak = np.max(np.array(peak_list[i][1]))
         max_peak = max_peak * THRESHOLD
@@ -34,8 +34,9 @@ def add_num_thread(z, peak_list, begin, done):
             if tpeak < max_peak:
                 continue
             t_mass0 = int(round(peak_list[i][0][j]))
-            z[t_mass0][i+begin] += int(tpeak)
-    done[0] +=len(peak_list)
+            z[t_mass0][i + begin] += int(tpeak)
+    done[0] += len(peak_list)
+
 
 # 用于转换mzML文件的TIC图,谱文件借助于pymzml
 class mzMLWorker(QThread):
@@ -143,22 +144,22 @@ class mzMLWorker(QThread):
             for j in range(L):
                 z[-1].append(0)
             x.append(i)
-        
+
         for i in range(L):
             y.append(i)
-        
+
         thread_list = []
         batch = 100
         done = [0]
-        for i in range(int(len(peaks)/batch)+1):
-            end = min(len(peaks), (i+1)*batch)
-            tthread = threading.Thread(target=add_num_thread, args=(z, peaks[i*batch:end], i*batch, done, ))
+        for i in range(int(len(peaks) / batch) + 1):
+            end = min(len(peaks), (i + 1) * batch)
+            tthread = threading.Thread(target=add_num_thread, args=(z, peaks[i * batch:end], i * batch, done,))
             thread_list.append(tthread)
 
         for thread in thread_list:
             thread.start()
-        
-        while(done[0]!=len(peaks)):
+
+        while (done[0] != len(peaks)):
             time.sleep(0.1)
 
         ret_z = []
@@ -182,7 +183,7 @@ class mzMLWorker(QThread):
             ret_x.append(x[i])
 
         ret_z = self.smooth(ret_z)
-        #with open('data/dict.pk', 'wb') as f:
+        # with open('data/dict.pk', 'wb') as f:
         #    pk.dump([ret_x, y, ret_z, tic], f)
         return [ret_x, y, ret_z, tic]
 
@@ -248,6 +249,7 @@ def get_merged_peaks(xml_path, start_scan, end_scan):
     max_inten = 0
     t = time.time()
     for i in range(start_scan, end_scan + 1):
+        t0 = time.time()
         spectrum = spectrums[i]
         binary_nodes = spectrum.getElementsByTagName("binary")
         if len(binary_nodes) > 0 and binary_nodes[0].firstChild is not None \
@@ -259,11 +261,16 @@ def get_merged_peaks(xml_path, start_scan, end_scan):
         else:
             mz_list = []
             inten_list = []
+        t1 = time.time()
+        print("parser_range_peaks", t1 - t0)
         for (mz, inten) in zip(mz_list, inten_list):
             new_mz = round(mz, 4)
             if new_mz not in mz_inten.keys():
                 mz_inten[new_mz] = 0
             mz_inten[new_mz] += inten
+        t2 = time.time()
+        print("merge", t2 - t1)
+
     for key in mz_inten.keys():
         peaks.append([key, mz_inten[key]])
         max_inten = max(max_inten, mz_inten[key])

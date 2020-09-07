@@ -230,7 +230,7 @@ class MainWindow(QMainWindow):
         self.ppm_region = QWidget()
         self.ppm_region_horizontalLayout = QHBoxLayout(self.ppm_region)
         self.ppm_region_horizontalLayout.setSpacing(8)
-        self.ppm_region.setFixedWidth(180)
+        self.ppm_region.setFixedWidth(210)
         # self.ppm_region.setObjectName("left26")
         self.ppm_info = QLabel()
         self.ppm_info.setStyleSheet("QLabel{background:none}")
@@ -240,7 +240,7 @@ class MainWindow(QMainWindow):
         self.edit_ppm.setPlaceholderText(str(self.ppm))
         self.edit_ppm.textEdited.connect(self.ppm_text_changed)
         self.edit_ppm.setObjectName("font_gray")
-        self.edit_ppm.setFixedWidth(50)
+        self.edit_ppm.setFixedWidth(80)
         self.right_anylyse = QPushButton("应用")
         self.right_anylyse.clicked.connect(self.apply_ppm)
         self.right_anylyse.setFixedWidth(58)
@@ -489,8 +489,8 @@ class MainWindow(QMainWindow):
         self.naviToolbar.insertAction(actList[0], self.tableAction)
         self.naviToolbar.insertAction(actList[0], actList[8])
 
-        # self.naviToolbar.removeAction(actList[6])
-        # self.naviToolbar.removeAction(actList[7])
+        self.naviToolbar.removeAction(actList[6])
+        self.naviToolbar.removeAction(actList[7])
 
         count = len(actList)  # Action的个数
         lastAction = actList[count - 1]  # 最后一个Action
@@ -507,7 +507,7 @@ class MainWindow(QMainWindow):
         ax1.axis("off")
         self._fig.canvas.draw_idle()
 
-    def generate_left_side(self):
+    def generate_left_side(self, flag='range'):
         if not self.init_finish:
             # 设置左侧边栏和右侧图表面板
             self.splitter = QSplitter(self)
@@ -535,9 +535,13 @@ class MainWindow(QMainWindow):
         tmp_hor.setContentsMargins(1, 1, 1, 1)
         tmp_hor.setSpacing(8)
 
-        tmp_btn_1 = QPushButton(str(self.start_scan) + "-" + str(self.end_scan))
+        if flag == 'range':
+            tmp_btn_1 = QPushButton(str(self.start_scan) + "-" + str(self.end_scan))
+        else:
+            tmp_btn_1 = QPushButton(str(self.scan))
+
         tmp_btn_1.setStyleSheet(tmp_scan_label_str)
-        tmp_btn_1.setFixedWidth(110)
+        tmp_btn_1.setFixedWidth(100)
 
         tmp_btn_2 = QPushButton(" ")
         tmp_btn_2.clicked.connect(self.hep_analyse)
@@ -1058,10 +1062,14 @@ class MainWindow(QMainWindow):
         self.customContextMenuRequested.connect(self.show_context_menu)
 
         self.contextMenu = QMenu(self)
-        self.merge_action = self.contextMenu.addAction(u'合并质谱')
+        self.merge_action = self.contextMenu.addAction(u'合并指定范围的质谱')
+        self.singe_scan_action = self.contextMenu.addAction(u'选择单个时间点的质谱')
+
         self.cancel_action = self.contextMenu.addAction(u'取消')
 
         self.merge_action.triggered.connect(self.rightPick)
+        self.singe_scan_action.triggered.connect(self.rightPick)
+        self.cancel_action.triggered.connect(self.rightPickCancel)
 
     def show_context_menu(self, pos):
         '''''
@@ -1079,7 +1087,7 @@ class MainWindow(QMainWindow):
                 self.start_scan, self.end_scan = self.scan_range
 
                 # 生成左侧边栏
-                self.generate_left_side()
+                self.generate_left_side(flag='range')
 
                 # 加载未合并的峰
                 self.spectrum, self.maxIntensity = get_merged_peaks(self.mzmlFileName, self.start_scan, self.end_scan)
@@ -1090,22 +1098,28 @@ class MainWindow(QMainWindow):
                 self.figFlag[0] = 2
                 self._fig.clear()
                 self.orgAx = self._fig.add_subplot(1, 1, 1)
-                xs, ys = format_peaks_350(self.peaks)
+                xs, ys = format_peaks(self.peaks)
                 save_file(self.peaks, "test.mgf")
                 self.plot_origin_peaks(xs, ys)
 
             elif self.scan is not None:
                 self.spectrum, self.maxIntensity = get_peaks_by_id(self.mzmlFileName, self.scan)
+                # 生成左侧边栏
+                self.generate_left_side(flag='single')
+
                 self.load_merged_peaks()
 
                 # 画出原始图
                 self.figFlag[0] = 2
                 self._fig.clear()
                 self.orgAx = self._fig.add_subplot(1, 1, 1)
-                xs, ys = format_peaks_350(self.peaks)
+                xs, ys = format_peaks(self.peaks)
                 self.plot_origin_peaks(xs, ys)
             else:
                 QMessageBox.information(self, "Message", "数据未加载,请先打开一个raw文件或目录")
+
+    def rightPickCancel(self):
+        pass
 
 
 if __name__ == "__main__":
