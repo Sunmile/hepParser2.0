@@ -21,6 +21,7 @@ import pandas as pd
 import platform
 import mplcursors
 import time
+import xlwt
 
 if platform.system() != "Windows":
     # 分析界面左侧按钮
@@ -151,6 +152,10 @@ class MainWindow(QMainWindow):
         self.the_HP = get_comp_pk('data/HP_20.pk')  # 枚举的理论肝素结构
         self.peak_dict = {}  # 保存实验谱mz->absolute intensity
 
+        # 用于保存excel
+        self.wb = xlwt.Workbook()
+        self.ws = self.wb.add_sheet('test')
+
         e = time.time()
         print("load pk:", e - s)
 
@@ -230,17 +235,18 @@ class MainWindow(QMainWindow):
         self.ppm_region = QWidget()
         self.ppm_region_horizontalLayout = QHBoxLayout(self.ppm_region)
         self.ppm_region_horizontalLayout.setSpacing(8)
-        self.ppm_region.setFixedWidth(210)
+        self.ppm_region.setFixedWidth(200)
         # self.ppm_region.setObjectName("left26")
         self.ppm_info = QLabel()
+        self.ppm_info.setText("ppm")
         self.ppm_info.setStyleSheet("QLabel{background:none}")
-        self.ppm_info.setFixedWidth(40)
+        self.ppm_info.setFixedWidth(36)
         self.edit_ppm = QLineEdit()
         self.edit_ppm.setStyleSheet("QLabel{background:none}")
         self.edit_ppm.setPlaceholderText(str(self.ppm))
         self.edit_ppm.textEdited.connect(self.ppm_text_changed)
         self.edit_ppm.setObjectName("font_gray")
-        self.edit_ppm.setFixedWidth(80)
+        self.edit_ppm.setFixedWidth(50)
         self.right_anylyse = QPushButton("应用")
         self.right_anylyse.clicked.connect(self.apply_ppm)
         self.right_anylyse.setFixedWidth(58)
@@ -349,17 +355,20 @@ class MainWindow(QMainWindow):
         self._draw3D_init()
 
         # 设置左侧边栏和右侧图表面板
-        # self.splitter = QSplitter(self)
-        # self.splitter.setOrientation(Qt.Horizontal)
-        # self.splitter.addWidget(self.figCanvas)
-        # self.splitter.addWidget(self.left_box)
-        # self.splitter.addWidget(self.figCanvas)
-        # leftWidth = int(400 * 100.0 / (QDesktopWidget().screenGeometry().width()))
+        self.splitter = QSplitter(self)
+        self.splitter.setOrientation(Qt.Horizontal)
+        self.splitter.addWidget(self.left_box)
+        self.splitter.addWidget(self.figCanvas)
+        # if platform.system() != "Windows":
+        #     leftWidth = int(660 * 100.0 / (QDesktopWidget().screenGeometry().width()))
+        # else:
+        #     leftWidth = int(840 * 100.0 / (QDesktopWidget().screenGeometry().width()))
         # self.splitter.setStretchFactor(0, leftWidth)
         # self.splitter.setStretchFactor(1, 100 - leftWidth)
-        # self.splitter.setHandleWidth(0)
-        # self.splitter.setStyleSheet("QSplitter::handle { background-color:white}")
-        self.setCentralWidget(self.figCanvas)
+        self.splitter.setHandleWidth(0)
+        self.splitter.setStyleSheet("QSplitter::handle { background-color:white}")
+        self.setCentralWidget(self.splitter)
+        self.left_box.hide()
 
     def _initMenu(self):
 
@@ -508,26 +517,8 @@ class MainWindow(QMainWindow):
         self._fig.canvas.draw_idle()
 
     def generate_left_side(self, flag='range'):
-        if not self.init_finish:
-            # 设置左侧边栏和右侧图表面板
-            self.splitter = QSplitter(self)
-            self.splitter.setOrientation(Qt.Horizontal)
-            self.splitter.addWidget(self.left_box)
-            self.splitter.addWidget(self.figCanvas)
-            # if platform.system() != "Windows":
-            #     leftWidth = int(660 * 100.0 / (QDesktopWidget().screenGeometry().width()))
-            # else:
-            #     leftWidth = int(840 * 100.0 / (QDesktopWidget().screenGeometry().width()))
-            # self.splitter.setStretchFactor(0, leftWidth)
-            # self.splitter.setStretchFactor(1, 100 - leftWidth)
-            self.splitter.setHandleWidth(0)
-            self.splitter.setStyleSheet("QSplitter::handle { background-color:white}")
-            self.setCentralWidget(self.splitter)
-
-            self.right_label_page.setDisabled(False)
-            self.left_box.setCurrentWidget(self.right_label_page)
-
-            self.init_finish = True
+        self.left_box.show()
+        self.left_box.setCurrentWidget(self.right_label_page)
 
         tmp_region = QWidget()
         tmp_region.setFixedWidth(180)
@@ -839,15 +830,6 @@ class MainWindow(QMainWindow):
         # 4.衍生峰里的
         self.mass_family = get_family(self.label_info, self.peak_dict)
 
-        # 5.用于表格下载
-        self.df = pd.DataFrame({
-            '质荷比': self.label_message[0],
-            '电荷': self.label_message[1],
-            '第几个同位素峰': self.label_message[2],
-            '分子组成': self.label_message[3],
-            '脱落基团': self.label_message[4]
-        })
-
         # 颜色生成器
         colors = mpl.cm.get_cmap("YlOrRd")  # 'viridis', 'inferno', 'plasma', 'magma'
         digit = list(map(str, range(10))) + list("ABCDEF")
@@ -1005,10 +987,35 @@ class MainWindow(QMainWindow):
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
-            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载分子式", 'data/formula.csv',
-                                                                "*.csv;;*.xls;;All Files(*)")
+            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载分子式", 'data/formula.xls',
+                                                                "*.xls;;All Files(*)")
             if selectedDir != '':
-                self.df.to_csv(selectedDir)
+                self.save_xls(selectedDir)
+                # self.df.to_csv(selectedDir)
+
+    def save_xls(self, path):
+        self.ws.write(0, 0, '质荷比')
+        self.ws.write(0, 1, '电荷')
+        self.ws.write(0, 2, '第几个同位素峰')
+        self.ws.write(0, 3, '分子组成')
+        self.ws.write(0, 4, '脱落基团')
+
+        i = 1
+        for key in self.xy:
+            label_list = self.mass_labels[key]
+            for j in range(len(label_list)):
+                self.ws.write(i, 0, str(key[0]))
+                self.ws.write(i, 1, str(label_list[j][2]))
+                self.ws.write(i, 2, str(label_list[j][4]))
+                self.ws.write(i, 3, str(label_list[j][0]))
+                self.ws.write(i, 4, str(label_list[j][1]))
+                i += 1
+
+        # for i in range(len(self.label_message[0])):
+        #     for j in range(0, 5):
+        #         self.ws.write(i + 1, j, str(self.label_message[j][i]))
+        # 保存excel文件
+        self.wb.save(path)
 
     def setOpacity(self):  # 这是设置菜单栏4个按钮的背景色
         self.showTICAction.setEnabled(self.opacity[0])
@@ -1043,6 +1050,7 @@ class MainWindow(QMainWindow):
         self._fig.canvas.mpl_connect('scroll_event', self.cursor.scroll)
 
     def _draw3D(self):
+        self.left_box.hide()
         self.figFlag[0] = 1
         self._fig.clear()
         ax = self._fig.add_subplot(111, projection='3d')
