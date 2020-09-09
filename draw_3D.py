@@ -136,6 +136,9 @@ class EventFactory(object):
         self.cuboid_lines[11].set_data_3d(np.array([x_max, x_min]), np.array([y1, y1]), np.array([z_max, z_max]))
 
     def mouse_press(self, event):
+        #右键点击无效
+        if event.button == 3:
+            return
         if self.active_flag[0] != 1:
             return
             # 鼠标点击事件
@@ -163,6 +166,9 @@ class EventFactory(object):
             self.press_flag = True
 
     def mouse_release(self, event):
+        #右键点击无效
+        if event.button == 3:
+            return
         if self.active_flag[0] != 1:
             return
         # 鼠标释放事件
