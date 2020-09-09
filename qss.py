@@ -1,6 +1,6 @@
 qstr = """
         QWidget {
-            background:#f2f2f2;
+            background:#fefefe;
             font-size:16px;
             color:#3265f6}
         QPushButton {
@@ -86,10 +86,10 @@ scroll_str = """
 navi_str = """
             QWidget {
                 border: none;
-                background: #f5f5f5;
+                background: #edeef0;
                 color:#3265f6;
-                padding:6px;
-                font-size:10px} 
+                padding:8px;
+                font-size:8px} 
             QWidget:hover {
                 background-color: #dddddd;
             }
@@ -97,6 +97,21 @@ navi_str = """
                 background-color: #dddddd;
             }
             """
+fig_navi_str = """
+            QWidget {
+                border: none;
+                background: white;
+                color:#3265f6;
+                padding:2px;
+                font-size:6px} 
+            QWidget:hover {
+                background-color: #dddddd;
+            }
+            QWidget:pressed {
+                background-color: #dddddd;
+            }
+                
+                """
 # label的分子式的样式
 label_struct_str = """QPushButton {
                         background-color:none;

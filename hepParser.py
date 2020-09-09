@@ -127,6 +127,7 @@ class MainWindow(QMainWindow):
     def _init_config(self):
         self.init_finish = False
         self.figFlag = [0]  # tic：1  labels:2  famliy:3
+        self.total_comp = 5157
         self.ppm = 20
         self.bound_th = 0.001
         self.bound_intensity = 300
@@ -177,14 +178,14 @@ class MainWindow(QMainWindow):
         mpl.rcParams['font.size'] = 14  # 字体大小
         mpl.rcParams['axes.unicode_minus'] = False  # 正常显示符号
 
-        # 窗体主要内容
-        self._initcentralWidget()
-
         # 菜单栏
         self._initMenu()
 
         # 工具栏
         self._initToolBar()
+
+        # 窗体主要内容
+        self._initcentralWidget()
 
         # 右键菜单栏
         self._init_right_pick_menu()
@@ -234,9 +235,8 @@ class MainWindow(QMainWindow):
 
         self.ppm_region = QWidget()
         self.ppm_region_horizontalLayout = QHBoxLayout(self.ppm_region)
-        self.ppm_region_horizontalLayout.setSpacing(8)
+        self.ppm_region_horizontalLayout.setSpacing(4)
         self.ppm_region.setFixedWidth(200)
-        # self.ppm_region.setObjectName("left26")
         self.ppm_info = QLabel()
         self.ppm_info.setText("ppm")
         self.ppm_info.setStyleSheet("QLabel{background:none}")
@@ -259,7 +259,6 @@ class MainWindow(QMainWindow):
         self.right_config_verticalLayout.addWidget(self.ppm_region)
 
         self.right_function_verticalLayout.addWidget(self.right_config)
-        # self.right_function_verticalLayout.addWidget(self.right_anylyse)
         self.right_function_verticalLayout.addStretch()
         self.right_function_scrollArea_21.setWidget(self.right_function_scrollAreaWidgetContents_21)
         self.right_function_verticalLayout_21.addWidget(self.right_function_scrollArea_21)
@@ -331,7 +330,7 @@ class MainWindow(QMainWindow):
         sub_splitter.setOrientation(Qt.Vertical)
         sub_splitter.addWidget(self.right_function_region)
         sub_splitter.addWidget(self.right_center)
-        sub_splitter.addWidget(self.right_struct_info)  # 右侧FigureCanvas对象
+        sub_splitter.addWidget(self.right_struct_info)  # 左侧FigureCanvas对象
 
         sub_splitter.setStretchFactor(0, 40)
         sub_splitter.setStretchFactor(1, 10)
@@ -354,11 +353,21 @@ class MainWindow(QMainWindow):
         self._drawInit()
         self._draw3D_init()
 
+        # 设置图的工具栏
+        self._initFigToolBar()
+
         # 设置左侧边栏和右侧图表面板
+        self.fig_splitter = QSplitter(self)
+        self.fig_splitter.setOrientation(Qt.Vertical)
+        self.fig_splitter.addWidget(self.figCanvas)
+        self.fig_splitter.addWidget(self.naviToolbar)
+        self.fig_splitter.setStretchFactor(0, 92)
+        self.fig_splitter.setStretchFactor(1, 8)
+
         self.splitter = QSplitter(self)
         self.splitter.setOrientation(Qt.Horizontal)
         self.splitter.addWidget(self.left_box)
-        self.splitter.addWidget(self.figCanvas)
+        self.splitter.addWidget(self.fig_splitter)
         # if platform.system() != "Windows":
         #     leftWidth = int(660 * 100.0 / (QDesktopWidget().screenGeometry().width()))
         # else:
@@ -369,6 +378,7 @@ class MainWindow(QMainWindow):
         self.splitter.setStyleSheet("QSplitter::handle { background-color:white}")
         self.setCentralWidget(self.splitter)
         self.left_box.hide()
+        self.naviToolbar.hide()
 
     def _initMenu(self):
 
@@ -426,14 +436,14 @@ class MainWindow(QMainWindow):
 
     def _initToolBar(self):
         # 自定义的工具栏工具
-        self.openDirActIcon = QAction(QIcon('icon/folder-open-regular.svg'), "打开目录", self)
-        self.openDirActIcon.setStatusTip('Open raw directory')
-        self.openDirActIcon.triggered.connect(self.openTICByRawDir)
-        self.openDirActIcon.setObjectName("blue")
+        self.openDirAction = QAction(QIcon('icon/folder-open-regular.svg'), "打开目录", self)
+        self.openDirAction.setStatusTip('Open raw directory')
+        self.openDirAction.triggered.connect(self.openTICByRawDir)
+        self.openDirAction.setObjectName("blue")
 
-        self.openFileActIcon = QAction(QIcon('icon/text-file-svgrepo-com.svg'), "打开文件", self)
-        self.openFileActIcon.setStatusTip('Open .mzml')
-        self.openFileActIcon.triggered.connect(self.openTICByMzML)
+        self.openFileAction = QAction(QIcon('icon/text-file-svgrepo-com.svg'), "打开文件", self)
+        self.openFileAction.setStatusTip('Open .mzml')
+        self.openFileAction.triggered.connect(self.openTICByMzML)
 
         self.showTICAction = QAction(QIcon('icon/text.svg'), 'TIC图', self)
         self.showTICAction.setStatusTip('TIC图')
@@ -452,62 +462,79 @@ class MainWindow(QMainWindow):
         self.downloadAction.triggered.connect(self.downloadTabel)
 
         # 设置工具栏的语言
+        self.tool_bar = QToolBar()
+        self.tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.tool_bar.addAction(self.openDirAction)
+        self.tool_bar.addAction(self.openFileAction)
+        self.tool_bar.addAction(self.showTICAction)
+        self.tool_bar.addAction(self.changeAction)
+        self.tool_bar.addAction(self.tableAction)
+        self.tool_bar.addAction(self.downloadAction)
+
+        self.tool_bar.setStyleSheet(navi_str)
+        self.tool_bar.setIconSize(QSize(18, 18))
+        self.addToolBar(Qt.LeftToolBarArea, self.tool_bar)
+
+    def _initFigToolBar(self):
         self.naviToolbar = NavigationToolbar(self.figCanvas, self)  # 创建工具栏
-        self.naviToolbar.setToolButtonStyle(
-            Qt.ToolButtonTextUnderIcon)  # ToolButtonTextUnderIcon,ToolButtonTextBesideIcon
+        self.naviToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         actList = self.naviToolbar.actions()  # 关联的Action列表
-        actList[0].setText("复位")  # Home
+        # actList[0].setText("复位")  # Home
+        actList[0].setText("")  # Home
         actList[0].setToolTip("复位到原始视图")  # Reset original view
         actList[0].setIcon(QIcon('icon/home-run.svg'))
 
-        actList[1].setText("回退")  # Back
+        actList[1].setText("")  # Back
+        # actList[1].setText("回退")  # Back
         actList[1].setToolTip("回到前一视图")  # Back to previous view
         actList[1].setIcon(QIcon('icon/left-arrow.svg'))
 
-        actList[2].setText("前进")  # Forward
+        # actList[2].setText("前进")  # Forward
+        actList[2].setText("")  # Forward
         actList[2].setToolTip("前进到下一视图")  # Forward to next view
         actList[2].setIcon(QIcon('icon/next.svg'))
 
-        actList[4].setText("拖拽")  # Pan
+        actList[4].setText("")  # Pan
+        # actList[4].setText("拖拽")  # Pan
         actList[4].setToolTip("左键平移坐标轴，右键缩放坐标轴")  # Pan axes with left mouse, zoom with right
         actList[4].setIcon(QIcon('icon/move.svg'))
 
-        actList[5].setText("缩放")  # Zoom
+        # actList[5].setText("缩放")  # Zoom
+        actList[5].setText("")  # Zoom
         actList[5].setToolTip("框选矩形框缩放")  # Zoom to rectangle
         actList[5].setIcon(QIcon('icon/zoom.svg'))
 
-        actList[6].setText("子图")  # Subplots
+        actList[6].setText("")  # Subplots
+        # actList[6].setText("子图")  # Subplots
         actList[6].setToolTip("设置子图")  # Configure subplots
         actList[6].setIcon(QIcon('icon/desktop.svg'))
 
-        actList[7].setText("定制")  # Customize
+        # actList[7].setText("定制")  # Customize
+        actList[7].setText("")  # Customize
         actList[7].setToolTip("定制图表参数")  # Edit axis, curve and image parameters
         actList[7].setIcon(QIcon('icon/config.svg'))
 
-        actList[9].setText("保存图片")  # Save
+        # actList[9].setText("保存图片")  # Save
+        actList[9].setText("")  # Save
         actList[9].setToolTip("保存图表")  # Save the figure
         actList[9].setIcon(QIcon('icon/save.svg'))
 
         # 设置初始透明度:
         self.setOpacity()
-
-        self.naviToolbar.insertAction(actList[0], self.openDirActIcon)
-        self.naviToolbar.insertAction(actList[0], self.openFileActIcon)
-        self.naviToolbar.insertAction(actList[0], self.showTICAction)
-        self.naviToolbar.insertAction(actList[0], self.changeAction)
-        self.naviToolbar.insertAction(actList[0], self.tableAction)
         self.naviToolbar.insertAction(actList[0], actList[8])
 
         self.naviToolbar.removeAction(actList[6])
         self.naviToolbar.removeAction(actList[7])
+        self.naviToolbar.removeAction(actList[3])
+        self.naviToolbar.removeAction(actList[8])
 
-        count = len(actList)  # Action的个数
-        lastAction = actList[count - 1]  # 最后一个Action
-        self.naviToolbar.insertAction(lastAction, self.downloadAction)
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.naviToolbar.addWidget(spacer)
 
-        self.naviToolbar.setStyleSheet(navi_str)
+        self.naviToolbar.setIconSize(QSize(12, 12))
 
-        self.addToolBar(self.naviToolbar)  # 添加matplotlib自带的工具栏到主窗口
+        self.naviToolbar.setStyleSheet(fig_navi_str)
 
     def _drawInit(self):
         img = Image.open('icon/background.png')
@@ -557,6 +584,7 @@ class MainWindow(QMainWindow):
         self.origin_xs, self.origin_ys = format_peaks(self.peaks)
 
     def plot_origin_peaks(self, xs, ys):  # 获取原始峰
+        self.naviToolbar.show()
         self.orgAx.plot(xs, ys, linewidth=1, c='gray', zorder=1)
         self.orgAx.set_ybound(lower=0, upper=1.1 * max(ys))
         self.orgAx.set_xlabel('m/z', fontsize=18)
@@ -580,6 +608,7 @@ class MainWindow(QMainWindow):
 
     def _draw_composition(self):
         # 标注分析
+        self.naviToolbar.show()
         self.figFlag[0] = 3
         self.load_label()
         self.mass_anotation = {}
@@ -709,6 +738,7 @@ class MainWindow(QMainWindow):
         self.right_anylyse.setStyleSheet(scan_btn_str)
 
     def _drawTable(self):
+        self.naviToolbar.hide()
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
@@ -725,7 +755,7 @@ class MainWindow(QMainWindow):
                     cell.visible_edges = 'B'
             # ax2.annotate('目前只显示前18行数据，更多数据请点击"下载分子式"下载后查看', xy=(0.6, 0), color='black', va='bottom', fontsize=10)
             ax2.set_title(
-                '目前只显示前20行数据，更多数据请点击"下载分子式"下载后查看\n分子组成:[HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man],基团脱落:[$HSO_3$, $NH_2$, $NH_{2}SO_3$, $COOH$]')
+                '目前只显示前20行数据，更多数据请点击"下载分子式"下载后查看\n分子组成:[$HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man$],基团脱落:[$HSO_3$, $NH_2$, $NH_{2}SO_3$, $COOH$]')
             ax2.axis("off")
             table.scale(1, 2.3)
 
@@ -736,6 +766,7 @@ class MainWindow(QMainWindow):
         self.tableAction.triggered.connect(self._draw_composition)
 
     def _label(self):
+        self.naviToolbar.show()
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
@@ -859,9 +890,9 @@ class MainWindow(QMainWindow):
 
     def updateDataProcessBar(self, ID):
         QApplication.processEvents()  # 实时刷新界面
-        self.dataDlgProcess.setValue(int(ID * 100.0 / 5157))
+        self.dataDlgProcess.setValue(int(ID * 100.0 / self.total_comp))
         QApplication.processEvents()  # 实时刷新界面
-        self.dataDlgProcess.setLabelText("已完成 " + str(ID) + "/5157       ")
+        self.dataDlgProcess.setLabelText("已完成 " + str(ID) + "/" + str(self.total_comp) + "       ")
         QApplication.processEvents()  # 实时刷新界面
 
     def infoParseProcess(self, data_info):
@@ -1011,9 +1042,6 @@ class MainWindow(QMainWindow):
                 self.ws.write(i, 4, str(label_list[j][1]))
                 i += 1
 
-        # for i in range(len(self.label_message[0])):
-        #     for j in range(0, 5):
-        #         self.ws.write(i + 1, j, str(self.label_message[j][i]))
         # 保存excel文件
         self.wb.save(path)
 
@@ -1051,6 +1079,7 @@ class MainWindow(QMainWindow):
 
     def _draw3D(self):
         self.left_box.hide()
+        self.naviToolbar.hide()
         self.figFlag[0] = 1
         self._fig.clear()
         ax = self._fig.add_subplot(111, projection='3d')
@@ -1100,29 +1129,29 @@ class MainWindow(QMainWindow):
                 # 加载未合并的峰
                 self.spectrum, self.maxIntensity = get_merged_peaks(self.mzmlFileName, self.start_scan, self.end_scan)
                 save_file(self.spectrum, "origin.mgf")
-                self.load_merged_peaks()
 
                 # 画出原始图
                 self.figFlag[0] = 2
                 self._fig.clear()
                 self.orgAx = self._fig.add_subplot(1, 1, 1)
-                xs, ys = format_peaks(self.peaks)
+                xs, ys = format_peaks(self.spectrum)
                 save_file(self.peaks, "test.mgf")
                 self.plot_origin_peaks(xs, ys)
-
+                self.load_merged_peaks()
             elif self.scan is not None:
                 self.spectrum, self.maxIntensity = get_peaks_by_id(self.mzmlFileName, self.scan)
+                save_file(self.spectrum, "938.mgf")
                 # 生成左侧边栏
                 self.generate_left_side(flag='single')
 
-                self.load_merged_peaks()
-
+                save_file(self.spectrum, "938.mgf")
                 # 画出原始图
                 self.figFlag[0] = 2
                 self._fig.clear()
                 self.orgAx = self._fig.add_subplot(1, 1, 1)
-                xs, ys = format_peaks(self.peaks)
+                xs, ys = format_peaks(self.spectrum)
                 self.plot_origin_peaks(xs, ys)
+                self.load_merged_peaks()
             else:
                 QMessageBox.information(self, "Message", "数据未加载,请先打开一个raw文件或目录")
 
