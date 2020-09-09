@@ -47,6 +47,8 @@ class EventFactory(object):
         self.ori_scan_range = scan_range  # 数据的mass和scan范围
         self.mass_range = self.ori_mass_range
         self.scan_range = self.ori_scan_range  # 画图的mass和scan范围
+        # 选择最大的intensity对应的scan，暂时不用
+        """
         maxv = 0
         maxi = 0
         for i, peak in enumerate(self.ori_data[3]):
@@ -55,6 +57,9 @@ class EventFactory(object):
                 maxi = i
         self.draw_label = 'scan'  # 已经选中的类别
         self.draw_value = maxi  # 选中类别的值
+        """
+        self.draw_label = None  # 已经选中的类别
+        self.draw_value = None  # 选中类别的值
         self.select_scan_range = []  # 选中的scan范围
 
         self.init_info()  # 初始化各类信息

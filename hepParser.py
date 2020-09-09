@@ -194,9 +194,9 @@ class MainWindow(QMainWindow):
 
         # 左侧第1页
         self.centralWidget = QWidget(self)
-        self.left_box = QToolBox(self.centralWidget)
-        self.left_box.setGeometry(QRect(5, 5, 356, 551))
-        self.left_box.setFrameShape(QFrame.NoFrame)
+        #self.left_box = QToolBox(self.centralWidget)
+        #self.left_box.setGeometry(QRect(5, 5, 356, 551))
+        #self.left_box.setFrameShape(QFrame.NoFrame)
 
         """左侧边栏的子面板1"""
         # 左侧第1页式tic页面，已被删除
@@ -339,9 +339,9 @@ class MainWindow(QMainWindow):
         self.right_verticalLayout_2.addWidget(sub_splitter)
 
         # 左侧面板
-        self.left_box.addItem(self.right_label_page, "质谱参数")
-        self.left_box.setStyleSheet(qstr)
-        self.left_box.setFixedWidth(240)
+        #self.left_box.addItem(self.right_label_page, "")
+        self.right_label_page.setStyleSheet(qstr)
+        self.right_label_page.setFixedWidth(240)
 
         # 中间图表面板
         self._fig = mpl.figure.Figure(figsize=(8, 5), dpi=72)  # 单位英寸
@@ -366,7 +366,7 @@ class MainWindow(QMainWindow):
 
         self.splitter = QSplitter(self)
         self.splitter.setOrientation(Qt.Horizontal)
-        self.splitter.addWidget(self.left_box)
+        self.splitter.addWidget(self.right_label_page)
         self.splitter.addWidget(self.fig_splitter)
         # if platform.system() != "Windows":
         #     leftWidth = int(660 * 100.0 / (QDesktopWidget().screenGeometry().width()))
@@ -377,7 +377,7 @@ class MainWindow(QMainWindow):
         self.splitter.setHandleWidth(0)
         self.splitter.setStyleSheet("QSplitter::handle { background-color:white}")
         self.setCentralWidget(self.splitter)
-        self.left_box.hide()
+        self.right_label_page.hide()
         self.naviToolbar.hide()
 
     def _initMenu(self):
@@ -463,6 +463,7 @@ class MainWindow(QMainWindow):
 
         # 设置工具栏的语言
         self.tool_bar = QToolBar()
+        self.tool_bar.setMovable(False)
         self.tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.tool_bar.addAction(self.openDirAction)
         self.tool_bar.addAction(self.openFileAction)
@@ -472,7 +473,7 @@ class MainWindow(QMainWindow):
         self.tool_bar.addAction(self.downloadAction)
 
         self.tool_bar.setStyleSheet(navi_str)
-        self.tool_bar.setIconSize(QSize(18, 18))
+        self.tool_bar.setIconSize(QSize(24, 24))
         self.addToolBar(Qt.LeftToolBarArea, self.tool_bar)
 
     def _initFigToolBar(self):
@@ -544,8 +545,8 @@ class MainWindow(QMainWindow):
         self._fig.canvas.draw_idle()
 
     def generate_left_side(self, flag='range'):
-        self.left_box.show()
-        self.left_box.setCurrentWidget(self.right_label_page)
+        self.right_label_page.show()
+        #self.left_box.setCurrentWidget(self.right_label_page)
 
         tmp_region = QWidget()
         tmp_region.setFixedWidth(180)
@@ -771,7 +772,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
             self.figFlag[0] = 4
-            self.left_box.setCurrentWidget(self.right_label_page)
+            #self.left_box.setCurrentWidget(self.right_label_page)
             self._labelFamilyPeak(1)
             # 重新添加按钮
             for i in range(self.right_center_horizontalLayout.count()):
@@ -1078,7 +1079,7 @@ class MainWindow(QMainWindow):
         self._fig.canvas.mpl_connect('scroll_event', self.cursor.scroll)
 
     def _draw3D(self):
-        self.left_box.hide()
+        self.right_label_page.hide()
         self.naviToolbar.hide()
         self.figFlag[0] = 1
         self._fig.clear()
