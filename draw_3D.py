@@ -3,7 +3,7 @@ import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.offsetbox import AnchoredText
 import re
-
+import platform
 import time
 
 MIN_SCAN_LEN = 5
@@ -340,7 +340,11 @@ class EventFactory(object):
         self.ax.tick_params(axis='x', labelrotation=-10)
         self.ax.tick_params(axis='z', labelrotation=-3.5)
 
-        at = AnchoredText("左键/拖拽: 预览、选择\n    右  键    : 开 始 分 析\n    滚  轮    : 放大、缩小",prop=dict(size=15, color = '#3d405b', bbox=dict(boxstyle="round,pad=0.3,rounding_size=0.",fc='w',ec='#3d405b')), frameon=False, loc='upper right')
+        if platform.system() != "Windows":
+            at = AnchoredText("左键/拖拽: 预览、选择\n    右  键    : 开 始 分 析\n    滚  轮    : 放大、缩小",prop=dict(size=15, color = '#3d405b', bbox=dict(boxstyle="round,pad=0.3,rounding_size=0.",fc='w',ec='#3d405b')), frameon=False, loc='upper right')
+        else:
+            at = AnchoredText("左键/拖拽: 预览、选择\n  右 键  : 开始分析\n  滚 轮  : 放大、缩小",prop=dict(size=15, color = '#3d405b', bbox=dict(boxstyle="round,pad=0.3,rounding_size=0.",fc='w',ec='#3d405b')), frameon=False, loc='upper right')
+       
         
         self.ax.add_artist(at)
         self.set_lim()
