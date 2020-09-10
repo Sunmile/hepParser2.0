@@ -432,28 +432,28 @@ class MainWindow(QMainWindow):
 
     def _initToolBar(self):
         # 自定义的工具栏工具
-        self.openDirAction = QAction(QIcon('icon/folder-open-regular.svg'), "打开目录", self)
+        self.openDirAction = QAction(QIcon('icon/folder.svg'), "打开目录", self)
         self.openDirAction.setStatusTip('Open raw directory')
         self.openDirAction.triggered.connect(self.openTICByRawDir)
         self.openDirAction.setObjectName("blue")
 
-        self.openFileAction = QAction(QIcon('icon/text-file-svgrepo-com.svg'), "打开文件", self)
+        self.openFileAction = QAction(QIcon('icon/file.svg'), "打开文件", self)
         self.openFileAction.setStatusTip('Open .mzml')
         self.openFileAction.triggered.connect(self.openTICByMzML)
 
-        self.showTICAction = QAction(QIcon('icon/text.svg'), 'TIC图', self)
+        self.showTICAction = QAction(QIcon('icon/T.svg'), 'TIC图', self)
         self.showTICAction.setStatusTip('TIC图')
         self.showTICAction.triggered.connect(self.showTIC)
 
-        self.changeAction = QAction(QIcon('icon/statistics.svg'), '修改组成', self)
+        self.changeAction = QAction(QIcon('icon/report.svg'), '修改组成', self)
         self.changeAction.setStatusTip('修改组成')
         self.changeAction.triggered.connect(self.change_comp)
 
-        self.tableAction = QAction(QIcon('icon/table-svgrepo-com.svg'), '显示表格', self)
+        self.tableAction = QAction(QIcon('icon/form.svg'), '显示表格', self)
         self.tableAction.setStatusTip('显示表格')
         self.tableAction.triggered.connect(self._drawTable)
 
-        self.downloadAction = QAction(QIcon('icon/download-svgrepo-com.svg'), '下载分子式', self)
+        self.downloadAction = QAction(QIcon('icon/download.svg'), '下载分子式', self)
         self.downloadAction.setStatusTip('下载分子式')
         self.downloadAction.triggered.connect(self.downloadTabel)
 
@@ -464,6 +464,10 @@ class MainWindow(QMainWindow):
         self.tool_bar.addAction(self.openDirAction)
         self.tool_bar.addAction(self.openFileAction)
         self.tool_bar.addAction(self.showTICAction)
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        spacer.setEnabled(False)
+        self.tool_bar.addWidget(spacer)
         self.tool_bar.addAction(self.changeAction)
         self.tool_bar.addAction(self.tableAction)
         self.tool_bar.addAction(self.downloadAction)
@@ -474,7 +478,9 @@ class MainWindow(QMainWindow):
 
     def _initFigToolBar(self):
         self.naviToolbar = NavigationToolbar(self.figCanvas, self)  # 创建工具栏
-        self.naviToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        #self.naviToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        
+        self.naviToolbar.setToolButtonStyle(Qt.ToolButtonIconOnly)
         actList = self.naviToolbar.actions()  # 关联的Action列表
         # actList[0].setText("复位")  # Home
         actList[0].setText("")  # Home
@@ -515,21 +521,25 @@ class MainWindow(QMainWindow):
         actList[9].setText("")  # Save
         actList[9].setToolTip("保存图表")  # Save the figure
         actList[9].setIcon(QIcon('icon/save.svg'))
-
+        print(actList)
         # 设置初始透明度:
         self.setOpacity()
         self.naviToolbar.insertAction(actList[0], actList[8])
 
+        self.naviToolbar.removeAction(actList[3])
         self.naviToolbar.removeAction(actList[6])
         self.naviToolbar.removeAction(actList[7])
-        self.naviToolbar.removeAction(actList[3])
         self.naviToolbar.removeAction(actList[8])
-
+        self.naviToolbar.removeAction(actList[10])
+        #self.naviToolbar.removeAction(actList[8])
+        #self.naviToolbar.removeAction(actList[8])
+        """
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.naviToolbar.addWidget(spacer)
+        """
 
-        self.naviToolbar.setIconSize(QSize(12, 12))
+        self.naviToolbar.setIconSize(QSize(18, 18))
 
         self.naviToolbar.setStyleSheet(fig_navi_str)
 
@@ -1045,6 +1055,9 @@ class MainWindow(QMainWindow):
         self.changeAction.setEnabled(self.opacity[1])
         self.tableAction.setEnabled(self.opacity[2])
         self.downloadAction.setEnabled(self.opacity[3])
+        self.changeAction.setVisible(self.opacity[1])
+        self.tableAction.setVisible(self.opacity[2])
+        self.downloadAction.setVisible(self.opacity[3])
 
     def aboutUs(self):
         if platform.system() != "Windows":
