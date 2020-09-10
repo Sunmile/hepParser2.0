@@ -1,6 +1,7 @@
 import pickle as pk
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.offsetbox import AnchoredText
 import re
 
 import time
@@ -257,7 +258,7 @@ class EventFactory(object):
         self.view_range = [-view_len, view_len]
 
         # 画上原始线
-
+        self.ax.set_title('$TIC$三维解析',pad = 50, fontsize=25)
         self.ax.set_xlabel(' mass ', labelpad=15)
         self.ax.set_ylabel(' scan ', labelpad=15)
         self.ax.set_zlabel('intensity', labelpad=20)
@@ -338,6 +339,10 @@ class EventFactory(object):
         self.ax.tick_params(axis='y', labelrotation=30)
         self.ax.tick_params(axis='x', labelrotation=-10)
         self.ax.tick_params(axis='z', labelrotation=-3.5)
+
+        at = AnchoredText("左键/拖拽: 预览、选择\n    右  键    : 开 始 分 析\n    滚  轮    : 放大、缩小",prop=dict(size=15, color = '#3d405b', bbox=dict(boxstyle="round,pad=0.3,rounding_size=0.",fc='w',ec='#3d405b')), frameon=False, loc='upper right')
+        
+        self.ax.add_artist(at)
         self.set_lim()
         self.fig.canvas.draw_idle()
         #print(time.time() - t)

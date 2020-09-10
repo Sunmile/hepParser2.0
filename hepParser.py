@@ -453,8 +453,8 @@ class MainWindow(QMainWindow):
         self.tableAction.setStatusTip('显示表格')
         self.tableAction.triggered.connect(self._drawTable)
 
-        self.downloadAction = QAction(QIcon('icon/download.svg'), '下载分子式', self)
-        self.downloadAction.setStatusTip('下载分子式')
+        self.downloadAction = QAction(QIcon('icon/download.svg'), '下载组成', self)
+        self.downloadAction.setStatusTip('下载组成')
         self.downloadAction.triggered.connect(self.downloadTabel)
 
         # 设置工具栏的语言
@@ -521,7 +521,6 @@ class MainWindow(QMainWindow):
         actList[9].setText("")  # Save
         actList[9].setToolTip("保存图表")  # Save the figure
         actList[9].setIcon(QIcon('icon/save.svg'))
-        print(actList)
         # 设置初始透明度:
         self.setOpacity()
         self.naviToolbar.insertAction(actList[0], actList[8])
@@ -531,14 +530,6 @@ class MainWindow(QMainWindow):
         self.naviToolbar.removeAction(actList[7])
         self.naviToolbar.removeAction(actList[8])
         self.naviToolbar.removeAction(actList[10])
-        #self.naviToolbar.removeAction(actList[8])
-        #self.naviToolbar.removeAction(actList[8])
-        """
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.naviToolbar.addWidget(spacer)
-        """
-
         self.naviToolbar.setIconSize(QSize(18, 18))
 
         self.naviToolbar.setStyleSheet(fig_navi_str)
@@ -738,7 +729,7 @@ class MainWindow(QMainWindow):
         self.opacity = [True, True, True, True]
         self.setOpacity()
         self.tableAction.setText("显示表格")
-        self.tableAction.setIcon(QIcon('icon/table-svgrepo-com.svg'))
+        self.tableAction.setIcon(QIcon('icon/form.svg'))
         self.tableAction.triggered.disconnect()
         self.tableAction.triggered.connect(self._drawTable)
         self.right_anylyse.setStyleSheet(scan_btn_str)
@@ -759,9 +750,9 @@ class MainWindow(QMainWindow):
                     cell.visible_edges = "BT"
                 if row == 20:
                     cell.visible_edges = 'B'
-            # ax2.annotate('目前只显示前18行数据，更多数据请点击"下载分子式"下载后查看', xy=(0.6, 0), color='black', va='bottom', fontsize=10)
+            # ax2.annotate('目前只显示前18行数据，更多数据请点击"下载组成"下载后查看', xy=(0.6, 0), color='black', va='bottom', fontsize=10)
             ax2.set_title(
-                '目前只显示前20行数据，更多数据请点击"下载分子式"下载后查看\n分子组成:[$HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man$],基团脱落:[$HSO_3$, $NH_2$, $NH_{2}SO_3$, $COOH$]')
+                '目前只显示前20行数据，更多数据请点击"下载组成"下载后查看\n分子组成:[$HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man$],基团脱落:[$HSO_3$, $NH_2$, $NH_{2}SO_3$, $COOH$]')
             ax2.axis("off")
             table.scale(1, 2.3)
 
@@ -1023,7 +1014,7 @@ class MainWindow(QMainWindow):
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
-            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载分子式", 'data/formula.xls',
+            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载组成", 'data/formula.xls',
                                                                 "*.xls;;All Files(*)")
             if selectedDir != '':
                 self.save_xls(selectedDir)
@@ -1097,7 +1088,9 @@ class MainWindow(QMainWindow):
         self.ori_mass_range = [alldata[0][0], alldata[0][-1]]
         self.ori_scan_range = [alldata[1][0], alldata[1][-1]]
         self.cursor.init(ax, alldata, self.ori_mass_range, self.ori_scan_range)
-
+        for i in range(len(self.opacity)):
+            self.opacity[i] = False
+        self.setOpacity()
         for i in range(0, self.right_tic_verticalLayout.count()):
             self.right_tic_verticalLayout.itemAt(i).widget().deleteLater()
 
@@ -1120,7 +1113,8 @@ class MainWindow(QMainWindow):
         '''''
         右键点击时调用的函数，菜单显示前，将它移动到鼠标点击的位置
         '''
-        print("right pick", self.pos)
+        if self.figFlag[0]!=1:
+            return
         self.contextMenu.move(self.pos() + pos)
         self.contextMenu.show()
 
@@ -1161,7 +1155,7 @@ class MainWindow(QMainWindow):
                 self.plot_origin_peaks(xs, ys)
                 self.load_merged_peaks()
             else:
-                QMessageBox.information(self, "Message", "数据未加载,请先打开一个raw文件或目录")
+                QMessageBox.information(self, "Message", "未选择数据,请先选择一个scan或一段scan对应的信息")
 
     def rightPickCancel(self):
         pass
