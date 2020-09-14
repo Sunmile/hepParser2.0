@@ -252,6 +252,7 @@ class QAnalyseBar(QDialog):
 
         self.gif_label = QLabel()
         self.precess_info = QLabel("即将开始组成分析")
+        self.precess_info.setStyleSheet("color:black;")
         self.gif = QMovie('./icon/hep.gif')
         self.gif.setScaledSize(QSize(72, 60))
 
@@ -269,6 +270,43 @@ class QAnalyseBar(QDialog):
 
     def setValue(self, value):
         self.pbar.setValue(value)
+
+    def setLabelText(self, text):
+        self.precess_info.setText(text)
+
+class DPstepBar(QDialog):
+
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("载入数据")
+        self.setWindowModality(Qt.NonModal)
+        screen = QDesktopWidget().screenGeometry()
+        windowSize = self.geometry()
+        self.resize(240, 90)
+        self.setStyleSheet("QWidget{background-color:white}")
+        self.center = QWidget(self)
+        self.center.setStyleSheet("QWidget{background-color:white}")
+        self.horizontalLayout = QHBoxLayout(self.center)
+        self.horizontalLayout.setContentsMargins(15, 10, 15, 10)
+        self.horizontalLayout.setSpacing(0)
+
+        self.gif_label = QLabel()
+        self.precess_info = QLabel("即将载入数据")
+        self.precess_info.setStyleSheet("color:black;")
+        self.precess_info.setFixedWidth(150)
+        self.gif = QMovie('./icon/hep.gif')
+        self.gif.setScaledSize(QSize(70, 60))
+
+        self.gif_label.setMovie(self.gif)
+
+        self.gif.start()
+
+        self.horizontalLayout.addWidget(self.gif_label)
+        self.horizontalLayout.addWidget(self.precess_info)
+        self.setModal(True)
 
     def setLabelText(self, text):
         self.precess_info.setText(text)

@@ -7,7 +7,7 @@ from PyQt5.QtGui import *
 from matplotlib.backend_bases import *
 from matplotlib.backends.backend_qt5agg import (FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
-from candidate_dialog import QmyDialogSize, QAnalyseBar, pbar_str
+from candidate_dialog import QmyDialogSize, QAnalyseBar, pbar_str, DPstepBar
 from spectra_tools import *
 from Hp_opt import get_fit_pk, get_comp_pk, save_file, get_filter_MZ
 from PIL import Image
@@ -891,12 +891,27 @@ class MainWindow(QMainWindow):
         self.dataDlgProcess.setLabelText("已完成 " + str(ID) + "/" + str(self.total_comp) + "       ")
         QApplication.processEvents()  # 实时刷新界面
 
+    def update_prpcess_step_bar(self, step):
+        QApplication.processEvents()  # 实时刷新界面
+        if step == 0:
+            self.data_process_bar.setLabelText("正 在 转 换 质 谱...")
+        elif step == 1:
+            self.data_process_bar.setLabelText("正 在 整 合 数 据...")
+        elif step == 2:
+            self.data_process_bar.setLabelText("正 在 平 滑 数 据...")
+        QApplication.processEvents()  # 实时刷新界面
+        if step == 3:
+            self.data_process_bar.close()
+
     def infoParseProcess(self, data_info):
         self.match_result, self.label_info, self.candidate_max_num, self.candi_score = data_info
 
     def mxmlParseProcess(self):
         self.mzThread = mzMLWorker(xmlFileName=self.mzmlFileName)
         self.mzThread.sinXml.connect(self.set_xmlInfo)
+        self.data_process_bar = DPstepBar()
+        self.data_process_bar.show()
+        self.mzThread.step.connect(self.update_prpcess_step_bar)
         self.mzThread.finished.connect(self._draw3D)
         self.mzThread.start()
 
@@ -1170,6 +1185,7 @@ if __name__ == "__main__":
     qApp.processEvents()
 
     win = MainWindow()
+    time.sleep(2)
     win.show()
     splash.finish(win)
     app.exit(app.exec_())

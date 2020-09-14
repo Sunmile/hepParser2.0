@@ -17,7 +17,7 @@ COLOR_LIST2 = ['#C1E1DC', '#265C00', '#68A225']
 COLOR_LIST3 = ['#C1E1DC', '#217CA3', '#32384D']
 COLOR_LIST4 = ['#B9C4C9', '#128277', '#004D47']
 COLOR_LIST5 = ['#C1E1DC', '#2962FF', 'black', '#7b1e7a']
-COLOR_LIST6 = ['#b9cfd4', '#7b1e7a', 'black', '#fffbff']
+COLOR_LIST6 = ['#b9cfd4', '#7b1e7a', '#4a4e69', '#fffbff']
 LINE_COLOR_LIST1 = ['#669900', '#99cc33', '#ccee66', '#006699', '#3399cc', '#990066', '#cc3399', '#ff6600', '#ff9900',
                     '#ffcc00']
 LINE_COLOR_LIST2 = ['#ffbc42', '#d81159', '#8f2d56', '#218380', '#73d2de']
@@ -298,7 +298,7 @@ class EventFactory(object):
                      zorder=3)[0]
         # 画出TIC
         max_tic = max(self.ori_data[3][self.scan_range[0]:self.scan_range[1]])
-        self.tic_prop = max_z / max_tic
+        self.tic_prop = max_z / max_tic * 0.5
         tmp_z = np.array(self.ori_data[3][self.scan_range[0]:self.scan_range[1]]) * self.tic_prop
         tmp_x = np.full(ylimit, self.mass_range[0])
         self.tic_line = self.ax.plot(tmp_x, tmp_y, tmp_z, color=self.line_color_list[2], linewidth=0.6, zorder=0)[0]
