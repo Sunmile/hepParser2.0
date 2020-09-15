@@ -89,7 +89,7 @@ navi_str = """
                 background: #edeef0;
                 color:#3265f6;
                 padding:8px;
-                font-size:8px} 
+                font-size:12px} 
             QWidget:hover {
                 background-color: #dddddd;
             }

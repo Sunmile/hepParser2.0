@@ -41,6 +41,7 @@ def add_num_thread(z, peak_list, begin, done):
 # 用于转换mzML文件的TIC图,谱文件借助于pymzml
 class mzMLWorker(QThread):
     sinXml = pyqtSignal(list)
+    step = pyqtSignal(int)
 
     def __init__(self, parent=None, xmlFileName=None):
         super(mzMLWorker, self).__init__(parent)
@@ -52,6 +53,7 @@ class mzMLWorker(QThread):
         self.sinXml.emit(xmlInfo)
 
     def loadXML(self):
+        self.step.emit(0)
         DOMTree = xml.parse(self.xmlFileName)
         root = DOMTree.documentElement
 
@@ -100,11 +102,12 @@ class mzMLWorker(QThread):
                     mz_list = []
                     inten_list = []
                 # self.save_mgf(scan, mz_list, inten_list)
-
+        self.step.emit(1)
         print("mzml:", num)
         t1 = time.time()
         print("mzML to Mgf:", t1 - t)
         draw_data = self.get_dict(peaks, tics)
+        self.step.emit(3)
         print("draw iter", time.time() - t1)
 
         return [times, tics, scans, maxScan, draw_data]
@@ -183,6 +186,7 @@ class mzMLWorker(QThread):
             ret_x.append(x[i])
 
         ret_z = self.smooth(ret_z)
+        self.step.emit(2)
         # with open('data/dict.pk', 'wb') as f:
         #    pk.dump([ret_x, y, ret_z, tic], f)
         return [ret_x, y, ret_z, tic]

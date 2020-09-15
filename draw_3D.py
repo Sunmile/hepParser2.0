@@ -1,8 +1,9 @@
 import pickle as pk
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.offsetbox import AnchoredText
 import re
-
+import platform
 import time
 
 MIN_SCAN_LEN = 5
@@ -16,7 +17,7 @@ COLOR_LIST2 = ['#C1E1DC', '#265C00', '#68A225']
 COLOR_LIST3 = ['#C1E1DC', '#217CA3', '#32384D']
 COLOR_LIST4 = ['#B9C4C9', '#128277', '#004D47']
 COLOR_LIST5 = ['#C1E1DC', '#2962FF', 'black', '#7b1e7a']
-COLOR_LIST6 = ['#b9cfd4', '#7b1e7a', 'black', '#fffbff']
+COLOR_LIST6 = ['#b9cfd4', '#7b1e7a', '#4a4e69', '#fffbff']
 LINE_COLOR_LIST1 = ['#669900', '#99cc33', '#ccee66', '#006699', '#3399cc', '#990066', '#cc3399', '#ff6600', '#ff9900',
                     '#ffcc00']
 LINE_COLOR_LIST2 = ['#ffbc42', '#d81159', '#8f2d56', '#218380', '#73d2de']
@@ -47,6 +48,8 @@ class EventFactory(object):
         self.ori_scan_range = scan_range  # 数据的mass和scan范围
         self.mass_range = self.ori_mass_range
         self.scan_range = self.ori_scan_range  # 画图的mass和scan范围
+        # 选择最大的intensity对应的scan，暂时不用
+        """
         maxv = 0
         maxi = 0
         for i, peak in enumerate(self.ori_data[3]):
@@ -55,6 +58,9 @@ class EventFactory(object):
                 maxi = i
         self.draw_label = 'scan'  # 已经选中的类别
         self.draw_value = maxi  # 选中类别的值
+        """
+        self.draw_label = None  # 已经选中的类别
+        self.draw_value = None  # 选中类别的值
         self.select_scan_range = []  # 选中的scan范围
 
         self.init_info()  # 初始化各类信息
@@ -136,6 +142,9 @@ class EventFactory(object):
         self.cuboid_lines[11].set_data_3d(np.array([x_max, x_min]), np.array([y1, y1]), np.array([z_max, z_max]))
 
     def mouse_press(self, event):
+        #右键点击无效
+        if event.button == 3:
+            return
         if self.active_flag[0] != 1:
             return
             # 鼠标点击事件
@@ -163,6 +172,9 @@ class EventFactory(object):
             self.press_flag = True
 
     def mouse_release(self, event):
+        #右键点击无效
+        if event.button == 3:
+            return
         if self.active_flag[0] != 1:
             return
         # 鼠标释放事件
@@ -246,7 +258,7 @@ class EventFactory(object):
         self.view_range = [-view_len, view_len]
 
         # 画上原始线
-
+        self.ax.set_title('$TIC$三维解析',pad = 50, fontsize=25)
         self.ax.set_xlabel(' mass ', labelpad=15)
         self.ax.set_ylabel(' scan ', labelpad=15)
         self.ax.set_zlabel('intensity', labelpad=20)
@@ -286,7 +298,7 @@ class EventFactory(object):
                      zorder=3)[0]
         # 画出TIC
         max_tic = max(self.ori_data[3][self.scan_range[0]:self.scan_range[1]])
-        self.tic_prop = max_z / max_tic
+        self.tic_prop = max_z / max_tic * 0.5
         tmp_z = np.array(self.ori_data[3][self.scan_range[0]:self.scan_range[1]]) * self.tic_prop
         tmp_x = np.full(ylimit, self.mass_range[0])
         self.tic_line = self.ax.plot(tmp_x, tmp_y, tmp_z, color=self.line_color_list[2], linewidth=0.6, zorder=0)[0]
@@ -327,6 +339,14 @@ class EventFactory(object):
         self.ax.tick_params(axis='y', labelrotation=30)
         self.ax.tick_params(axis='x', labelrotation=-10)
         self.ax.tick_params(axis='z', labelrotation=-3.5)
+
+        if platform.system() != "Windows":
+            at = AnchoredText("左键/拖拽: 预览、选择\n    右  键    : 开 始 分 析\n    滚  轮    : 放大、缩小",prop=dict(size=15, color = '#3d405b', bbox=dict(boxstyle="round,pad=0.3,rounding_size=0.",fc='w',ec='#3d405b')), frameon=False, loc='upper right')
+        else:
+            at = AnchoredText("左键/拖拽: 预览、选择\n  右 键  : 开始分析\n  滚 轮  : 放大、缩小",prop=dict(size=15, color = '#3d405b', bbox=dict(boxstyle="round,pad=0.3,rounding_size=0.",fc='w',ec='#3d405b')), frameon=False, loc='upper right')
+       
+        
+        self.ax.add_artist(at)
         self.set_lim()
         self.fig.canvas.draw_idle()
         #print(time.time() - t)

@@ -7,7 +7,7 @@ from PyQt5.QtGui import *
 from matplotlib.backend_bases import *
 from matplotlib.backends.backend_qt5agg import (FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
-from candidate_dialog import QmyDialogSize, QAnalyseBar, pbar_str
+from candidate_dialog import QmyDialogSize, QAnalyseBar, pbar_str, DPstepBar
 from spectra_tools import *
 from Hp_opt import get_fit_pk, get_comp_pk, save_file, get_filter_MZ
 from PIL import Image
@@ -194,9 +194,6 @@ class MainWindow(QMainWindow):
 
         # 左侧第1页
         self.centralWidget = QWidget(self)
-        self.left_box = QToolBox(self.centralWidget)
-        self.left_box.setGeometry(QRect(5, 5, 356, 551))
-        self.left_box.setFrameShape(QFrame.NoFrame)
 
         """左侧边栏的子面板1"""
         # 左侧第1页式tic页面，已被删除
@@ -339,9 +336,8 @@ class MainWindow(QMainWindow):
         self.right_verticalLayout_2.addWidget(sub_splitter)
 
         # 左侧面板
-        self.left_box.addItem(self.right_label_page, "质谱参数")
-        self.left_box.setStyleSheet(qstr)
-        self.left_box.setFixedWidth(240)
+        self.right_label_page.setStyleSheet(qstr)
+        self.right_label_page.setFixedWidth(240)
 
         # 中间图表面板
         self._fig = mpl.figure.Figure(figsize=(8, 5), dpi=72)  # 单位英寸
@@ -366,7 +362,7 @@ class MainWindow(QMainWindow):
 
         self.splitter = QSplitter(self)
         self.splitter.setOrientation(Qt.Horizontal)
-        self.splitter.addWidget(self.left_box)
+        self.splitter.addWidget(self.right_label_page)
         self.splitter.addWidget(self.fig_splitter)
         # if platform.system() != "Windows":
         #     leftWidth = int(660 * 100.0 / (QDesktopWidget().screenGeometry().width()))
@@ -377,7 +373,7 @@ class MainWindow(QMainWindow):
         self.splitter.setHandleWidth(0)
         self.splitter.setStyleSheet("QSplitter::handle { background-color:white}")
         self.setCentralWidget(self.splitter)
-        self.left_box.hide()
+        self.right_label_page.hide()
         self.naviToolbar.hide()
 
     def _initMenu(self):
@@ -436,45 +432,55 @@ class MainWindow(QMainWindow):
 
     def _initToolBar(self):
         # 自定义的工具栏工具
-        self.hepParserIcon = QAction(QIcon('icon/analysing.svg'), "", self)
-
-        self.openDirAction = QAction(QIcon('icon/folder-open-regular.svg'), "打开目录", self)
+        self.openDirAction = QAction(QIcon('icon/folder.svg'), "打开目录", self)
+        self.openDirAction.setStatusTip('Open raw directory')
         self.openDirAction.triggered.connect(self.openTICByRawDir)
+        self.openDirAction.setObjectName("blue")
 
-        self.openFileAction = QAction(QIcon('icon/text-file-svgrepo-com.svg'), "打开文件", self)
+        self.openFileAction = QAction(QIcon('icon/file.svg'), "打开文件", self)
+        self.openFileAction.setStatusTip('Open .mzml')
         self.openFileAction.triggered.connect(self.openTICByMzML)
 
-        self.showTICAction = QAction(QIcon('icon/text.svg'), 'TIC图', self)
+        self.showTICAction = QAction(QIcon('icon/T.svg'), 'TIC图', self)
+        self.showTICAction.setStatusTip('TIC图')
         self.showTICAction.triggered.connect(self.showTIC)
 
-        self.changeAction = QAction(QIcon('icon/statistics.svg'), '修改组成', self)
+        self.changeAction = QAction(QIcon('icon/report.svg'), '修改组成', self)
+        self.changeAction.setStatusTip('修改组成')
         self.changeAction.triggered.connect(self.change_comp)
 
-        self.tableAction = QAction(QIcon('icon/table-svgrepo-com.svg'), '显示表格', self)
+        self.tableAction = QAction(QIcon('icon/form.svg'), '显示表格', self)
+        self.tableAction.setStatusTip('显示表格')
         self.tableAction.triggered.connect(self._drawTable)
 
-        self.downloadAction = QAction(QIcon('icon/download-svgrepo-com.svg'), '下载分子式', self)
+        self.downloadAction = QAction(QIcon('icon/download.svg'), '下载组成', self)
+        self.downloadAction.setStatusTip('下载组成')
         self.downloadAction.triggered.connect(self.downloadTabel)
 
         # 设置工具栏的语言
         self.tool_bar = QToolBar()
         self.tool_bar.setMovable(False)
         self.tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        self.tool_bar.addAction(self.hepParserIcon)
         self.tool_bar.addAction(self.openDirAction)
         self.tool_bar.addAction(self.openFileAction)
         self.tool_bar.addAction(self.showTICAction)
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        spacer.setEnabled(False)
+        self.tool_bar.addWidget(spacer)
         self.tool_bar.addAction(self.changeAction)
         self.tool_bar.addAction(self.tableAction)
         self.tool_bar.addAction(self.downloadAction)
 
         self.tool_bar.setStyleSheet(navi_str)
-        self.tool_bar.setIconSize(QSize(18, 18))
+        self.tool_bar.setIconSize(QSize(24, 24))
         self.addToolBar(Qt.LeftToolBarArea, self.tool_bar)
 
     def _initFigToolBar(self):
         self.naviToolbar = NavigationToolbar(self.figCanvas, self)  # 创建工具栏
-        self.naviToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        #self.naviToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+
+        self.naviToolbar.setToolButtonStyle(Qt.ToolButtonIconOnly)
         actList = self.naviToolbar.actions()  # 关联的Action列表
         # actList[0].setText("复位")  # Home
         actList[0].setText("")  # Home
@@ -515,18 +521,16 @@ class MainWindow(QMainWindow):
         actList[9].setText("")  # Save
         actList[9].setToolTip("保存图表")  # Save the figure
         actList[9].setIcon(QIcon('icon/save.svg'))
-
         # 设置初始透明度:
         self.setOpacity()
         self.naviToolbar.insertAction(actList[0], actList[8])
 
+        self.naviToolbar.removeAction(actList[3])
         self.naviToolbar.removeAction(actList[6])
         self.naviToolbar.removeAction(actList[7])
-        self.naviToolbar.removeAction(actList[3])
         self.naviToolbar.removeAction(actList[8])
-
-
-        self.naviToolbar.setIconSize(QSize(12, 12))
+        self.naviToolbar.removeAction(actList[10])
+        self.naviToolbar.setIconSize(QSize(18, 18))
 
         self.naviToolbar.setStyleSheet(fig_navi_str)
 
@@ -538,8 +542,7 @@ class MainWindow(QMainWindow):
         self._fig.canvas.draw_idle()
 
     def generate_left_side(self, flag='range'):
-        self.left_box.show()
-        self.left_box.setCurrentWidget(self.right_label_page)
+        self.right_label_page.show()
 
         tmp_region = QWidget()
         tmp_region.setFixedWidth(180)
@@ -726,7 +729,7 @@ class MainWindow(QMainWindow):
         self.opacity = [True, True, True, True]
         self.setOpacity()
         self.tableAction.setText("显示表格")
-        self.tableAction.setIcon(QIcon('icon/table-svgrepo-com.svg'))
+        self.tableAction.setIcon(QIcon('icon/form.svg'))
         self.tableAction.triggered.disconnect()
         self.tableAction.triggered.connect(self._drawTable)
         self.right_anylyse.setStyleSheet(scan_btn_str)
@@ -747,9 +750,9 @@ class MainWindow(QMainWindow):
                     cell.visible_edges = "BT"
                 if row == 20:
                     cell.visible_edges = 'B'
-            # ax2.annotate('目前只显示前18行数据，更多数据请点击"下载分子式"下载后查看', xy=(0.6, 0), color='black', va='bottom', fontsize=10)
+            # ax2.annotate('目前只显示前18行数据，更多数据请点击"下载组成"下载后查看', xy=(0.6, 0), color='black', va='bottom', fontsize=10)
             ax2.set_title(
-                '目前只显示前20行数据，更多数据请点击"下载分子式"下载后查看\n分子组成:[$HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man$],基团脱落:[$HSO_3$, $NH_2$, $NH_{2}SO_3$, $COOH$]')
+                '目前只显示前20行数据，更多数据请点击"下载组成"下载后查看\n分子组成:[$HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man$],基团脱落:[$HSO_3$, $NH_2$, $NH_{2}SO_3$, $COOH$]')
             ax2.axis("off")
             table.scale(1, 2.3)
 
@@ -765,7 +768,6 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
             self.figFlag[0] = 4
-            self.left_box.setCurrentWidget(self.right_label_page)
             self._labelFamilyPeak(1)
             # 重新添加按钮
             for i in range(self.right_center_horizontalLayout.count()):
@@ -889,12 +891,27 @@ class MainWindow(QMainWindow):
         self.dataDlgProcess.setLabelText("已完成 " + str(ID) + "/" + str(self.total_comp) + "       ")
         QApplication.processEvents()  # 实时刷新界面
 
+    def update_prpcess_step_bar(self, step):
+        QApplication.processEvents()  # 实时刷新界面
+        if step == 0:
+            self.data_process_bar.setLabelText("正 在 转 换 质 谱...")
+        elif step == 1:
+            self.data_process_bar.setLabelText("正 在 整 合 数 据...")
+        elif step == 2:
+            self.data_process_bar.setLabelText("正 在 平 滑 数 据...")
+        QApplication.processEvents()  # 实时刷新界面
+        if step == 3:
+            self.data_process_bar.close()
+
     def infoParseProcess(self, data_info):
         self.match_result, self.label_info, self.candidate_max_num, self.candi_score = data_info
 
     def mxmlParseProcess(self):
         self.mzThread = mzMLWorker(xmlFileName=self.mzmlFileName)
         self.mzThread.sinXml.connect(self.set_xmlInfo)
+        self.data_process_bar = DPstepBar()
+        self.data_process_bar.show()
+        self.mzThread.step.connect(self.update_prpcess_step_bar)
         self.mzThread.finished.connect(self._draw3D)
         self.mzThread.start()
 
@@ -1012,7 +1029,7 @@ class MainWindow(QMainWindow):
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
-            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载分子式", 'data/formula.xls',
+            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载组成", 'data/formula.xls',
                                                                 "*.xls;;All Files(*)")
             if selectedDir != '':
                 self.save_xls(selectedDir)
@@ -1044,6 +1061,9 @@ class MainWindow(QMainWindow):
         self.changeAction.setEnabled(self.opacity[1])
         self.tableAction.setEnabled(self.opacity[2])
         self.downloadAction.setEnabled(self.opacity[3])
+        self.changeAction.setVisible(self.opacity[1])
+        self.tableAction.setVisible(self.opacity[2])
+        self.downloadAction.setVisible(self.opacity[3])
 
     def aboutUs(self):
         if platform.system() != "Windows":
@@ -1072,12 +1092,11 @@ class MainWindow(QMainWindow):
         self._fig.canvas.mpl_connect('scroll_event', self.cursor.scroll)
 
     def _draw3D(self):
-        self.left_box.hide()
+        self.right_label_page.hide()
         self.naviToolbar.hide()
         self.figFlag[0] = 1
-        self._fig.clear()
         self.ppm = 20
-        self.edit_ppm.setPlaceholderText(str(self.ppm))
+        self._fig.clear()
         ax = self._fig.add_subplot(111, projection='3d')
         ax.disable_mouse_rotation()
 
@@ -1085,7 +1104,9 @@ class MainWindow(QMainWindow):
         self.ori_mass_range = [alldata[0][0], alldata[0][-1]]
         self.ori_scan_range = [alldata[1][0], alldata[1][-1]]
         self.cursor.init(ax, alldata, self.ori_mass_range, self.ori_scan_range)
-
+        for i in range(len(self.opacity)):
+            self.opacity[i] = False
+        self.setOpacity()
         for i in range(0, self.right_tic_verticalLayout.count()):
             self.right_tic_verticalLayout.itemAt(i).widget().deleteLater()
 
@@ -1108,7 +1129,8 @@ class MainWindow(QMainWindow):
         '''''
         右键点击时调用的函数，菜单显示前，将它移动到鼠标点击的位置
         '''
-        print("right pick", self.pos)
+        if self.figFlag[0]!=1:
+            return
         self.contextMenu.move(self.pos() + pos)
         self.contextMenu.show()
 
@@ -1149,7 +1171,7 @@ class MainWindow(QMainWindow):
                 self.plot_origin_peaks(xs, ys)
                 self.load_merged_peaks()
             else:
-                QMessageBox.information(self, "Message", "数据未加载,请先打开一个raw文件或目录")
+                QMessageBox.information(self, "Message", "未选择数据,请先选择一个scan或一段scan对应的信息")
 
     def rightPickCancel(self):
         pass
@@ -1164,6 +1186,7 @@ if __name__ == "__main__":
     qApp.processEvents()
 
     win = MainWindow()
+    time.sleep(2)
     win.show()
     splash.finish(win)
     app.exit(app.exec_())
