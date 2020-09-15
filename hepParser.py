@@ -436,34 +436,31 @@ class MainWindow(QMainWindow):
 
     def _initToolBar(self):
         # 自定义的工具栏工具
+        self.hepParserIcon = QAction(QIcon('icon/analysing.svg'), "", self)
+
         self.openDirAction = QAction(QIcon('icon/folder-open-regular.svg'), "打开目录", self)
-        self.openDirAction.setStatusTip('Open raw directory')
         self.openDirAction.triggered.connect(self.openTICByRawDir)
-        self.openDirAction.setObjectName("blue")
 
         self.openFileAction = QAction(QIcon('icon/text-file-svgrepo-com.svg'), "打开文件", self)
-        self.openFileAction.setStatusTip('Open .mzml')
         self.openFileAction.triggered.connect(self.openTICByMzML)
 
         self.showTICAction = QAction(QIcon('icon/text.svg'), 'TIC图', self)
-        self.showTICAction.setStatusTip('TIC图')
         self.showTICAction.triggered.connect(self.showTIC)
 
         self.changeAction = QAction(QIcon('icon/statistics.svg'), '修改组成', self)
-        self.changeAction.setStatusTip('修改组成')
         self.changeAction.triggered.connect(self.change_comp)
 
         self.tableAction = QAction(QIcon('icon/table-svgrepo-com.svg'), '显示表格', self)
-        self.tableAction.setStatusTip('显示表格')
         self.tableAction.triggered.connect(self._drawTable)
 
         self.downloadAction = QAction(QIcon('icon/download-svgrepo-com.svg'), '下载分子式', self)
-        self.downloadAction.setStatusTip('下载分子式')
         self.downloadAction.triggered.connect(self.downloadTabel)
 
         # 设置工具栏的语言
         self.tool_bar = QToolBar()
+        self.tool_bar.setMovable(False)
         self.tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.tool_bar.addAction(self.hepParserIcon)
         self.tool_bar.addAction(self.openDirAction)
         self.tool_bar.addAction(self.openFileAction)
         self.tool_bar.addAction(self.showTICAction)
@@ -528,9 +525,6 @@ class MainWindow(QMainWindow):
         self.naviToolbar.removeAction(actList[3])
         self.naviToolbar.removeAction(actList[8])
 
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.naviToolbar.addWidget(spacer)
 
         self.naviToolbar.setIconSize(QSize(12, 12))
 
@@ -1082,6 +1076,8 @@ class MainWindow(QMainWindow):
         self.naviToolbar.hide()
         self.figFlag[0] = 1
         self._fig.clear()
+        self.ppm = 20
+        self.edit_ppm.setPlaceholderText(str(self.ppm))
         ax = self._fig.add_subplot(111, projection='3d')
         ax.disable_mouse_rotation()
 
