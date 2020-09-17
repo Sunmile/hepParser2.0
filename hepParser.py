@@ -1117,11 +1117,13 @@ class MainWindow(QMainWindow):
         self.contextMenu = QMenu(self)
         self.merge_action = self.contextMenu.addAction(u'合并指定范围的质谱')
         self.singe_scan_action = self.contextMenu.addAction(u'选择单个时间点的质谱')
+        self.draw_according_to_mass = self.contextMenu.addAction(u'选个单个mass')
 
         self.cancel_action = self.contextMenu.addAction(u'取消')
 
         self.merge_action.triggered.connect(self.rightPick)
         self.singe_scan_action.triggered.connect(self.rightPick)
+        self.draw_according_to_mass.triggered.connect(self.right_pick_draw_mass)
         self.cancel_action.triggered.connect(self.rightPickCancel)
 
     def show_context_menu(self, pos):
@@ -1132,6 +1134,27 @@ class MainWindow(QMainWindow):
             return
         self.contextMenu.move(self.pos() + pos)
         self.contextMenu.show()
+    
+    def right_pick_draw_mass(self):
+        if self.figFlag[0] == 1:
+            self.mass = self.cursor.get_current_mass()
+            if self.mass is None:
+                QMessageBox.information(self, "Message", "未选择数据,请先选择一个mass")
+            else:
+                aim_mass_list = self.get_concerned_mass_list(self.mass)
+                precise_digits = 1
+                data_file_name = 'data/peaks.pk'
+                x,y,z = get_mass_data(data_file_name, aim_mass_list, precise_digits)
+                self.opacity[0] = 1
+                self.showTICAction.setEnabled(self.opacity[0])
+                self.figFlag[0] = 5
+                self._fig.clear()
+                ax = self._fig.add_subplot(111, projection='3d')
+                draw_3d_mass(ax, x,y,z)
+                self._fig.canvas.draw_idle()     
+
+    def get_concerned_mass_list(self, mass):
+        return [576.0,536.0,528.0,536.5,567.5]
 
     def rightPick(self):
         if self.figFlag[0] == 1:

@@ -109,6 +109,8 @@ class mzMLWorker(QThread):
         draw_data = self.get_dict(peaks, tics)
         self.step.emit(3)
         print("draw iter", time.time() - t1)
+        with open('data/peaks.pk', 'wb') as f:
+            pk.dump(peaks, f)
 
         return [times, tics, scans, maxScan, draw_data]
 
@@ -185,32 +187,32 @@ class mzMLWorker(QThread):
             ret_z.append(z[i])
             ret_x.append(x[i])
 
-        ret_z = self.smooth(ret_z)
+        ret_z = smooth(ret_z)
         self.step.emit(2)
         # with open('data/dict.pk', 'wb') as f:
         #    pk.dump([ret_x, y, ret_z, tic], f)
         return [ret_x, y, ret_z, tic]
 
-    def smooth(self, z_data):
-        ret = []
-        smooth_len = 10
-        for z_list in z_data:
-            t_list = []
-            for i in range(len(z_list)):
-                left = max(0, i - int(smooth_len / 2))
-                right = min(len(z_list), i + int(smooth_len / 2))
+def smooth(z_data):
+    ret = []
+    smooth_len = 10
+    for z_list in z_data:
+        t_list = []
+        for i in range(len(z_list)):
+            left = max(0, i - int(smooth_len / 2))
+            right = min(len(z_list), i + int(smooth_len / 2))
 
-                def ave(data_list):
-                    L = len(data_list)
-                    all_d = 0
-                    for item in data_list:
-                        all_d += item
-                    return int(all_d / L)
+            def ave(data_list):
+                L = len(data_list)
+                all_d = 0
+                for item in data_list:
+                    all_d += item
+                return int(all_d / L)
 
-                t_list.append(ave(z_list[left:right]))
-            ret.append(t_list)
+            t_list.append(ave(z_list[left:right]))
+        ret.append(t_list)
 
-        return ret
+    return ret
 
 
 def decodeBase64AndDecompressZlib(data):
@@ -282,6 +284,64 @@ def get_merged_peaks(xml_path, start_scan, end_scan):
     t1 = time.time()
     print("get_merged_peaks", t1 - t)
     return peaks, max_inten
+
+def get_mass_data(file_name, aim_list, digits):
+    with open('data/peaks.pk', 'rb') as f:
+        peaks = pk.load(f)
+    ret_x = list(np.round(np.array(aim_list)*1.0, digits))
+    L = len(peaks)
+    ret_y = []
+    ret_z = []
+    for i in range(L):
+        ret_y.append(i)
+    
+    dis = 10**(-digits)
+    for mass in ret_x:
+        value = []
+        for peak_list in peaks:
+            if len(peak_list)==0:
+                value.append(0)
+                continue
+            
+            if len(peak_list[0]) == 0:
+                value.append(0)
+                continue
+
+            tmp = 0
+            aim_begin = mass - dis*2
+            aim_end = mass + dis*2
+            begin_i = get_index_from_mass_list(peak_list[0], aim_begin)
+            end_i = get_index_from_mass_list(peak_list[0], aim_end)
+            assert(end_i>=begin_i)
+            i = begin_i
+            while(i<=end_i):
+                a = round(peak_list[0][i],digits)
+                b = round(mass,digits)
+                if  a == b:
+                    tmp += int(peak_list[1][i])
+                
+                elif a>b:
+                    break
+                i = i + 1 
+            value.append(tmp)
+        
+        ret_z.append(value)
+    
+    ret_z =smooth(ret_z)
+    return ret_x, ret_y, ret_z
+
+def get_index_from_mass_list(mass_list, aimnum):
+    left = 0
+    right = len(mass_list)-1
+    while((right-left)>1):
+        mid = int((left+right)/2)
+        if mass_list[mid]>aimnum:
+            right = mid
+        else:
+            left = mid
+    
+    return left
+
 
 # parser = XmlParser("")
 # infos = parser.loadXML()
