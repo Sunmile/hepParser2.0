@@ -479,7 +479,7 @@ class MainWindow(QMainWindow):
     def _initFigToolBar(self):
         self.naviToolbar = NavigationToolbar(self.figCanvas, self)  # 创建工具栏
         #self.naviToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        
+
         self.naviToolbar.setToolButtonStyle(Qt.ToolButtonIconOnly)
         actList = self.naviToolbar.actions()  # 关联的Action列表
         # actList[0].setText("复位")  # Home
@@ -1095,6 +1095,7 @@ class MainWindow(QMainWindow):
         self.right_label_page.hide()
         self.naviToolbar.hide()
         self.figFlag[0] = 1
+        self.ppm = 20
         self._fig.clear()
         ax = self._fig.add_subplot(111, projection='3d')
         ax.disable_mouse_rotation()
