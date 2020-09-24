@@ -1150,7 +1150,7 @@ class MainWindow(QMainWindow):
                 self.showTICAction.setEnabled(self.opacity[0])
                 self.figFlag[0] = 5
                 self._fig.clear()
-                ax = self._fig.add_subplot(111, projection='3d')
+                ax = self._fig.add_subplot(1,1,1)
                 draw_3d_mass(ax, x,y,z)
                 self._fig.canvas.draw_idle()     
 

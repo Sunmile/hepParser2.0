@@ -709,31 +709,35 @@ class EventFactory(object):
 
 
 def draw_3d_mass(ax,x,y,z):
-    ax.set_xlabel(' mass ')
-    ax.set_ylabel(' scan ')
-    ax.set_zlabel('intensity')
-    ax.set_title('$mass$趋势图',pad = 50, fontsize=25)
+    #ax.set_xlabel(' mass ')
+    ax.set_xlabel(' scan ',fontsize=18)
+    ax.set_ylabel('intensity',fontsize=18)
+    ax.set_title('$mass$趋势图',pad = 50)
     L = len(y)
     tmp_y = np.array(y)
-    ax.xaxis.pane.fill = True
-    ax.yaxis.pane.fill = True
-    ax.zaxis.pane.fill = True
-    ax.xaxis.pane.set_color(COLOR_LIST6[3])
-    ax.yaxis.pane.set_color(COLOR_LIST6[3])
-    ax.zaxis.pane.set_color(COLOR_LIST6[3])
+    #ax.xaxis.pane.fill = True
+    #ax.yaxis.pane.fill = True
+    #ax.zaxis.pane.fill = True
+    #ax.xaxis.pane.set_color(COLOR_LIST6[3])
+    #ax.yaxis.pane.set_color(COLOR_LIST6[3])
+    #ax.zaxis.pane.set_color(COLOR_LIST6[3])
     
     len_color = len(LINE_COLOR_LIST5)
     for i in range(len(x)):
         tmp_z = np.array(z[i])
-        tmp_x = np.full(L, x[i])
-        ax.plot(tmp_x,tmp_y,tmp_z,linewidth=1,color=LINE_COLOR_LIST5[i % len_color], label=str(x[i]))
+        #tmp_x = np.full(L, x[i])
+        ax.plot(tmp_y,tmp_z,linewidth=2,color=LINE_COLOR_LIST5[i % len_color], label=str(x[i]))
     
-    ax.zaxis.get_major_formatter().set_powerlimits((0, 1))
-    ax.zaxis.get_major_formatter().set_useMathText(True)
+    ax.yaxis.get_major_formatter().set_powerlimits((0, 1))
+    ax.yaxis.get_major_formatter().set_useMathText(True)
+    ax.set_xlim(left=0)
+    ax.set_ylim(bottom=0)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_linewidth(1.5)
+    ax.spines['bottom'].set_linewidth(1.5)
 
-    at = AnchoredText("\n左键拖拽: 转换视角\n",prop=dict(size=15, color = '#3d405b', bbox=dict(boxstyle="round,pad=0.3,rounding_size=0.",fc='w',ec='#3d405b')), frameon=False, loc='upper right')
-    ax.add_artist(at)
     if len(x)<=5:
-        ax.legend(loc='lower right')
+        ax.legend(loc='upper right')
     else:
-        ax.legend(loc='lower right', ncol=2)
+        ax.legend(loc='upper right', ncol=2)
