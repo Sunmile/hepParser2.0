@@ -622,7 +622,15 @@ class MainWindow(QMainWindow):
             self.right_struct_score_verticalLayout.itemAt(i).widget().deleteLater()
 
         # 重新添加按钮
+        change_region = QWidget()
+        change_horizontalLayout = QHBoxLayout(change_region)
         change_btn = QPushButton("启动单分子标注")
+        change_btn.clicked.connect(self._label)
+        change_btn.setFixedWidth(150)
+
+        struct_btn = QPushButton("↓")
+        struct_btn.clicked.connect(self.downloadStruct)
+
         change_info_region = QWidget()
         change_info_region_hori = QVBoxLayout(change_info_region)
         change_info_region_hori.setAlignment(Qt.AlignHCenter)
@@ -631,9 +639,11 @@ class MainWindow(QMainWindow):
         change_info.setText("点击后可选择单个分子对谱进行解释")
         change_info.setStyleSheet("QLabel{font-size:8px;}")
         change_info_region_hori.addWidget(change_info)
-        change_btn.clicked.connect(self._label)
-        change_btn.setFixedWidth(150)
-        self.right_center_horizontalLayout.addWidget(change_btn)
+
+        change_horizontalLayout.addWidget(change_btn)
+        change_horizontalLayout.addWidget(struct_btn)
+
+        self.right_center_horizontalLayout.addWidget(change_region)
         self.right_center_horizontalLayout.addWidget(change_info_region)
         self.struct_title_num.setText("&nbsp;序号<sup></sup>")
         self.struct_title_info.setText("&nbsp;&nbsp;&nbsp;分子组成<sup>a</sup>")
@@ -665,7 +675,7 @@ class MainWindow(QMainWindow):
             right_scores.append(self.right_struct[i][1])
 
         self.struct_df = pd.DataFrame({"id": right_is, "composition": right_structs, "score": right_scores})
-        self.struct_df.to_csv("data/struct.csv", index=False)
+        # self.struct_df.to_csv("data/struct.csv", index=False)
         # self.downloadStruct()
 
         for i in range(self.right_struct_btn_verticalLayout.count()):
