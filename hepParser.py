@@ -478,7 +478,7 @@ class MainWindow(QMainWindow):
 
     def _initFigToolBar(self):
         self.naviToolbar = NavigationToolbar(self.figCanvas, self)  # 创建工具栏
-        #self.naviToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        # self.naviToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
         self.naviToolbar.setToolButtonStyle(Qt.ToolButtonIconOnly)
         actList = self.naviToolbar.actions()  # 关联的Action列表
@@ -622,7 +622,15 @@ class MainWindow(QMainWindow):
             self.right_struct_score_verticalLayout.itemAt(i).widget().deleteLater()
 
         # 重新添加按钮
+        change_region = QWidget()
+        change_horizontalLayout = QHBoxLayout(change_region)
         change_btn = QPushButton("启动单分子标注")
+        change_btn.clicked.connect(self._label)
+        change_btn.setFixedWidth(150)
+
+        struct_btn = QPushButton("↓")
+        struct_btn.clicked.connect(self.downloadStruct)
+
         change_info_region = QWidget()
         change_info_region_hori = QVBoxLayout(change_info_region)
         change_info_region_hori.setAlignment(Qt.AlignHCenter)
@@ -631,14 +639,18 @@ class MainWindow(QMainWindow):
         change_info.setText("点击后可选择单个分子对谱进行解释")
         change_info.setStyleSheet("QLabel{font-size:8px;}")
         change_info_region_hori.addWidget(change_info)
-        change_btn.clicked.connect(self._label)
-        change_btn.setFixedWidth(150)
-        self.right_center_horizontalLayout.addWidget(change_btn)
+
+        change_horizontalLayout.addWidget(change_btn)
+        change_horizontalLayout.addWidget(struct_btn)
+
+        self.right_center_horizontalLayout.addWidget(change_region)
         self.right_center_horizontalLayout.addWidget(change_info_region)
         self.struct_title_num.setText("&nbsp;序号<sup></sup>")
         self.struct_title_info.setText("&nbsp;&nbsp;&nbsp;分子组成<sup>a</sup>")
         self.struct_title_info_2.setText("&nbsp;&nbsp;&nbsp;&nbsp;<sup>a</sup>[HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man]")
         self.struct_title_score.setText("<sup></sup>&nbsp;&nbsp;&nbsp;&nbsp;单分子解释度")
+
+        right_is, right_structs, right_scores = [], [], []
         for i in range(len(self.right_struct)):
             label_btn = QPushButton(str(i + 1))
             label_btn.setStyleSheet(
@@ -658,6 +670,13 @@ class MainWindow(QMainWindow):
             self.right_struct_btn_verticalLayout.addWidget(label_btn)
             self.right_struct_region_verticalLayout.addWidget(label_struct)
             self.right_struct_score_verticalLayout.addWidget(label_score)
+            right_is.append(i + 1)
+            right_structs.append(self.right_struct[i][0])
+            right_scores.append(self.right_struct[i][1])
+
+        self.struct_df = pd.DataFrame({"id": right_is, "composition": right_structs, "score": right_scores})
+        # self.struct_df.to_csv("data/struct.csv", index=False)
+        # self.downloadStruct()
 
         for i in range(self.right_struct_btn_verticalLayout.count()):
             self.right_struct_btn_verticalLayout.itemAt(i).widget().setDisabled(True)
@@ -1025,6 +1044,15 @@ class MainWindow(QMainWindow):
         else:
             self._draw3D()
 
+    def downloadStruct(self):
+        if self.figFlag[0] < 2:
+            QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
+        else:
+            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载组成", 'data/structs.csv',
+                                                                "*.csv;;All Files(*)")
+            if selectedDir != '':
+                self.struct_df.to_csv(selectedDir, index=False)
+
     def downloadTabel(self):
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
@@ -1033,7 +1061,6 @@ class MainWindow(QMainWindow):
                                                                 "*.xls;;All Files(*)")
             if selectedDir != '':
                 self.save_xls(selectedDir)
-                # self.df.to_csv(selectedDir)
 
     def save_xls(self, path):
         self.ws.write(0, 0, '质荷比')
@@ -1131,11 +1158,11 @@ class MainWindow(QMainWindow):
         '''''
         右键点击时调用的函数，菜单显示前，将它移动到鼠标点击的位置
         '''
-        if self.figFlag[0]!=1:
+        if self.figFlag[0] != 1:
             return
         self.contextMenu.move(self.pos() + pos)
         self.contextMenu.show()
-    
+
     def right_pick_draw_mass(self):
         if self.figFlag[0] == 1:
             self.mass = self.cursor.get_current_mass()
@@ -1145,7 +1172,7 @@ class MainWindow(QMainWindow):
                 aim_mass_list = self.get_concerned_mass_list(self.mass)
                 precise_digits = 1
                 data_file_name = 'data/peaks.pk'
-                x,y,z = get_mass_data(data_file_name, aim_mass_list, precise_digits)
+                x, y, z = get_mass_data(data_file_name, aim_mass_list, precise_digits)
                 self.opacity[0] = 1
                 self.showTICAction.setEnabled(self.opacity[0])
                 self.figFlag[0] = 5
@@ -1155,7 +1182,7 @@ class MainWindow(QMainWindow):
                 self._fig.canvas.draw_idle()     
 
     def get_concerned_mass_list(self, mass):
-        return [576.0,536.0,528.0,536.5,567.5]
+        return [576.0, 536.0, 528.0, 536.5, 567.5]
 
     def rightPick(self):
         if self.figFlag[0] == 1:
