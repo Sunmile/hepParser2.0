@@ -741,3 +741,37 @@ def draw_3d_mass(ax,x,y,z):
         ax.legend(loc='upper right')
     else:
         ax.legend(loc='upper right', ncol=2)
+
+
+def draw_3d_mass_compare(ax,x,y,z,index1, index2):
+    ax.set_xlabel(' scan ',fontsize=18)
+    ax.set_ylabel('ratio',fontsize=18)
+    ax.set_title('$mass$对比图({}/{})'.format(x[index1], x[index2]),pad = 50)
+    L = len(y)
+    tmp_y = np.array(y)
+    z1 = z[index1]
+    z2 = z[index2]
+    
+    z = []
+    for zitem1,zitem2 in zip(z1,z2):
+        if zitem1==zitem2:
+            z.append(1)
+            continue
+        elif zitem2 == 0:
+            z.append(0)
+            continue
+
+        else:
+            z.append(zitem1/zitem2)
+    tmp_z = np.array(z)
+    ax.plot(tmp_y,tmp_z,linewidth=2,color='black')
+    
+    #ax.yaxis.get_major_formatter().set_powerlimits((0, 1))
+    #ax.yaxis.get_major_formatter().set_useMathText(True)
+    ax.set_xlim(left=0)
+    ax.set_ylim(bottom=0)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_linewidth(1.5)
+    ax.spines['bottom'].set_linewidth(1.5)
+
