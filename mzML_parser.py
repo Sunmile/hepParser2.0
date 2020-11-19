@@ -193,6 +193,7 @@ class mzMLWorker(QThread):
         #    pk.dump([ret_x, y, ret_z, tic], f)
         return [ret_x, y, ret_z, tic]
 
+
 def smooth(z_data):
     ret = []
     smooth_len = 10
@@ -221,6 +222,13 @@ def decodeBase64AndDecompressZlib(data):
     ret_data = np.frombuffer(dec_data, np.float64)
 
     return ret_data
+
+
+def save_mgf(root_path, scan, mz_list, inten_list):
+    print(scan)
+    with open(root_path + str(scan), 'w', newline='') as f:
+        for i in range(0, len(mz_list)):
+            f.write(str(mz_list[i]) + " " + str(inten_list[i]) + "\n")
 
 
 def get_peaks_by_id(xmlPath, spectrumID):
@@ -285,63 +293,120 @@ def get_merged_peaks(xml_path, start_scan, end_scan):
     print("get_merged_peaks", t1 - t)
     return peaks, max_inten
 
+
 def get_mass_data(file_name, aim_list, digits):
     with open('data/peaks.pk', 'rb') as f:
         peaks = pk.load(f)
-    ret_x = list(np.round(np.array(aim_list)*1.0, digits))
+    ret_x = list(np.round(np.array(aim_list) * 1.0, digits))
     L = len(peaks)
     ret_y = []
     ret_z = []
     for i in range(L):
         ret_y.append(i)
-    
-    dis = 10**(-digits)
+
+    dis = 10 ** (-digits)
     for mass in ret_x:
         value = []
         for peak_list in peaks:
-            if len(peak_list)==0:
+            if len(peak_list) == 0:
                 value.append(0)
                 continue
-            
+
             if len(peak_list[0]) == 0:
                 value.append(0)
                 continue
 
             tmp = 0
-            aim_begin = mass - dis*2
-            aim_end = mass + dis*2
+            aim_begin = mass - dis * 2
+            aim_end = mass + dis * 2
             begin_i = get_index_from_mass_list(peak_list[0], aim_begin)
             end_i = get_index_from_mass_list(peak_list[0], aim_end)
-            assert(end_i>=begin_i)
+            assert (end_i >= begin_i)
             i = begin_i
-            while(i<=end_i):
-                a = round(peak_list[0][i],digits)
-                b = round(mass,digits)
-                if  a == b:
+            while (i <= end_i):
+                a = round(peak_list[0][i], digits)
+                b = round(mass, digits)
+                if a == b:
                     tmp += int(peak_list[1][i])
-                
-                elif a>b:
+
+                elif a > b:
                     break
-                i = i + 1 
+                i = i + 1
             value.append(tmp)
-        
+
         ret_z.append(value)
-    
-    ret_z =smooth(ret_z)
+
+    ret_z = smooth(ret_z)
     return ret_x, ret_y, ret_z
+
 
 def get_index_from_mass_list(mass_list, aimnum):
     left = 0
-    right = len(mass_list)-1
-    while((right-left)>1):
-        mid = int((left+right)/2)
-        if mass_list[mid]>aimnum:
+    right = len(mass_list) - 1
+    while ((right - left) > 1):
+        mid = int((left + right) / 2)
+        if mass_list[mid] > aimnum:
             right = mid
         else:
             left = mid
-    
+
     return left
 
 
+def loadXML(xmlFileName):
+    DOMTree = xml.parse(xmlFileName)
+    root = DOMTree.documentElement
+
+    times, tics, scans = [], [], []
+    maxTic, maxScan = 0.0, 0
+    num = 0
+    spectrums = root.getElementsByTagName("spectrum")
+    peaks = []
+    t = time.time()
+    for spectrum in spectrums:
+        scan = spectrum.getAttribute("id").split()[2].split('=')[1]
+        mslevel, tic, startTime = None, None, None
+        for i in range(1, len(spectrum.childNodes), 2):
+            node = spectrum.childNodes[i]
+            if mslevel is None and node.attributes['name'].value == "ms level":
+                mslevel = node.attributes['value'].value
+            if tic is None and node.attributes['name'].value == "total ion current":
+                tic = float(node.attributes['value'].value)
+            if startTime is None and node.localName == 'scanList':
+                scanNode = node.childNodes[3]
+                for j in range(1, len(scanNode.childNodes), 2):
+                    if scanNode.childNodes[j].attributes['name'].value == "scan start time":
+                        startTime = float(scanNode.childNodes[j].attributes['value'].value)
+                        break
+
+        binary_nodes = spectrum.getElementsByTagName("binary")
+
+        if mslevel == '1':
+            num += 1
+            times.append(startTime)
+            tics.append(tic)
+            scans.append("scan=" + scan)
+            if tic > maxTic:
+                maxTic = tic
+                maxScan = int(scan)
+
+            if len(binary_nodes) > 0 and binary_nodes[0].firstChild is not None \
+                    and binary_nodes[1].firstChild is not None:
+                mz_data = binary_nodes[0].firstChild.data
+                i_data = binary_nodes[1].firstChild.data
+                mz_list = decodeBase64AndDecompressZlib(mz_data)
+                inten_list = decodeBase64AndDecompressZlib(i_data)
+                peaks.append([mz_list, inten_list])
+            else:
+                peaks.append([[], []])
+                mz_list = []
+                inten_list = []
+            save_mgf("hep/", scan, mz_list, inten_list)
+    print("mzml:", num)
+    t1 = time.time()
+    print("mzML to Mgf:", t1 - t)
+
+
+loadXML("/Users/hou/Downloads/20201117_HEP_F2-F2_CHAI_3uL_NEG IDA_001.mzML")
 # parser = XmlParser("")
 # infos = parser.loadXML()
