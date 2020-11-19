@@ -204,7 +204,61 @@ class MainWindow(QMainWindow):
         self.right_verticalLayout_2 = QVBoxLayout(self.right_label_page)
         self.right_verticalLayout_2.setContentsMargins(3, 3, 3, 3)
         self.right_verticalLayout_2.setSpacing(2)
+        
+        # mass对比
+        self.right_label_page_mass = QWidget()
+        self.right_label_page_mass.setGeometry(QRect(0, 0, 356, 401))
+        self.right_verticalLayout_mass = QVBoxLayout(self.right_label_page_mass)
+        self.right_verticalLayout_mass.setContentsMargins(3, 3, 3, 3)
+        self.right_verticalLayout_mass.setSpacing(2)
+        
+        self.select_mass_region = QWidget()
+        self.select_mass_vertical_layout = QVBoxLayout(self.select_mass_region)
+        self.select_mass_vertical_layout.setContentsMargins(3, 3, 3, 3)
+        self.select_mass_vertical_layout.setSpacing(2)
 
+        self.select_mass_scrollArea = QScrollArea(self.select_mass_region)
+        self.select_mass_scrollArea.setFrameShape(QFrame.Panel)
+        self.select_mass_scrollArea.setFrameShadow(QFrame.Raised)
+        self.select_mass_scrollArea.setWidgetResizable(True)
+        self.select_mass_scrollArea.verticalScrollBar().setStyleSheet(scroll_str)
+        self.select_mass_scrollArea.horizontalScrollBar().setStyleSheet(scroll_str)
+
+        self.select_mass_scrollAreaWidgetContents = QWidget()
+        self.select_mass_scrollAreaWidgetContents.setGeometry(QRect(0, 0, 348, 393))
+        
+        self.select_mass_vertical_layout2 = QVBoxLayout(self.select_mass_scrollAreaWidgetContents)
+        self.select_mass_vertical_layout2.setSpacing(2)
+        self.select_mass_label = QLabel('可选mass列表')
+        self.select_mass_vertical_layout2.addWidget(self.select_mass_label)
+
+        self.radio_button_widget = QWidget()
+        self.radio_button_group = QButtonGroup()
+        self.radio_button_list = []
+        self.radio_button_layout = QVBoxLayout(self.radio_button_widget)
+        self.select_mass_vertical_layout2.addWidget(self.radio_button_widget)
+        self.select_mass_vertical_layout2.setSpacing(4)
+
+        self.radio_button_amount = 0
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        spacer.setEnabled(False)
+        self.select_mass_vertical_layout2.addWidget(spacer)
+        self.show_compared_graph = QPushButton("对比")
+        self.show_compared_graph_back = QPushButton("返回")
+        self.show_compared_graph.clicked.connect(self.show_compared_graph_func)
+        self.show_compared_graph_back.clicked.connect(self.show_compared_graph_back_func)
+
+        self.select_mass_vertical_layout2.addWidget(self.show_compared_graph)
+        self.select_mass_vertical_layout2.addWidget(self.show_compared_graph_back)
+        self.show_compared_graph_back.hide()
+        self.show_compared_graph_back.setEnabled(False)
+        self.select_mass_vertical_layout2.setSpacing(2)
+        self.select_mass_scrollArea.setFixedWidth(220)
+
+        self.select_mass_scrollArea.setWidget(self.select_mass_scrollAreaWidgetContents)
+        self.select_mass_vertical_layout.addWidget(self.select_mass_scrollArea)
+        
         # 上半部分
         self.right_function_region = QWidget()
 
@@ -339,6 +393,10 @@ class MainWindow(QMainWindow):
         self.right_label_page.setStyleSheet(qstr)
         self.right_label_page.setFixedWidth(240)
 
+        self.right_verticalLayout_mass.addWidget(self.select_mass_region)
+        self.right_label_page_mass.setStyleSheet(qstr)
+        self.right_label_page_mass.setFixedWidth(240)
+        
         # 中间图表面板
         self._fig = mpl.figure.Figure(figsize=(8, 5), dpi=72)  # 单位英寸
         self._fig.subplots_adjust(left=0.09, bottom=0.09, right=0.95, top=0.9, wspace=0.3, hspace=0.3)
@@ -363,6 +421,7 @@ class MainWindow(QMainWindow):
         self.splitter = QSplitter(self)
         self.splitter.setOrientation(Qt.Horizontal)
         self.splitter.addWidget(self.right_label_page)
+        self.splitter.addWidget(self.right_label_page_mass)
         self.splitter.addWidget(self.fig_splitter)
         # if platform.system() != "Windows":
         #     leftWidth = int(660 * 100.0 / (QDesktopWidget().screenGeometry().width()))
@@ -374,6 +433,7 @@ class MainWindow(QMainWindow):
         self.splitter.setStyleSheet("QSplitter::handle { background-color:white}")
         self.setCentralWidget(self.splitter)
         self.right_label_page.hide()
+        self.right_label_page_mass.hide()
         self.naviToolbar.hide()
 
     def _initMenu(self):
@@ -1120,6 +1180,7 @@ class MainWindow(QMainWindow):
 
     def _draw3D(self):
         self.right_label_page.hide()
+        self.right_label_page_mass.hide()
         self.naviToolbar.hide()
         self.figFlag[0] = 1
         self.ppm = 20
@@ -1173,16 +1234,72 @@ class MainWindow(QMainWindow):
                 precise_digits = 1
                 data_file_name = 'data/peaks.pk'
                 x, y, z = get_mass_data(data_file_name, aim_mass_list, precise_digits)
+                self.draw_3d_mass_data = [x,y,z]
+                self.generate_left_side_mass()
                 self.opacity[0] = 1
                 self.showTICAction.setEnabled(self.opacity[0])
                 self.figFlag[0] = 5
                 self._fig.clear()
-                ax = self._fig.add_subplot(111, projection='3d')
-                draw_3d_mass(ax, x, y, z)
-                self._fig.canvas.draw_idle()
+                ax = self._fig.add_subplot(1,1,1)
+                draw_3d_mass(ax, x,y,z)
+                self._fig.canvas.draw_idle()     
 
     def get_concerned_mass_list(self, mass):
         return [576.0, 536.0, 528.0, 536.5, 567.5]
+    
+
+    def show_compared_graph_func(self):
+        x,y,z = self.draw_3d_mass_data
+        index_list = []
+        for i in range(len(self.radio_button_list)):
+            if self.radio_button_list[i].isChecked():
+                index_list.append(i)
+                continue
+
+        if len(index_list)!=2:
+            QMessageBox.information(self, "Message", "请先选择两个用于对比的mass值！")
+            
+        else:
+            self.figFlag[0] = 6
+            self._fig.clear()
+            ax = self._fig.add_subplot(1,1,1)
+            draw_3d_mass_compare(ax, x,y,z, index_list[0], index_list[1])
+            self._fig.canvas.draw_idle()
+            self.show_compared_graph_back.show()
+            self.show_compared_graph_back.setEnabled(True)            
+    
+    def show_compared_graph_back_func(self):
+        x,y,z = self.draw_3d_mass_data
+        self.figFlag[0] = 5
+        self._fig.clear()
+        ax = self._fig.add_subplot(1,1,1)
+        draw_3d_mass(ax, x,y,z)
+        self._fig.canvas.draw_idle()
+        self.show_compared_graph_back.hide()
+        self.show_compared_graph_back.setEnabled(False) 
+
+
+    def generate_left_side_mass(self):
+        x,y,z = self.draw_3d_mass_data
+        for i in range(self.radio_button_amount):
+            self.radio_button_group.removeButton(self.radio_button_list[i])
+
+        for item in self.radio_button_list:
+            self.radio_button_layout.removeWidget(item)
+            del item
+        
+        self.radio_button_list = []
+        self.radio_button_amount = len(x)
+
+        for i in range(self.radio_button_amount):
+            tbutton = QRadioButton(str(x[i]))
+            self.radio_button_list.append(tbutton)
+            self.radio_button_layout.addWidget(tbutton)
+            self.radio_button_group.addButton(tbutton)
+        
+        self.radio_button_group.setExclusive(False)
+        self.right_label_page_mass.show()
+
 
     def rightPick(self):
         if self.figFlag[0] == 1:
