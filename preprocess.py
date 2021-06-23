@@ -39,10 +39,35 @@ def filter_spectra(MZ_int, th, max_int, min_int=300):
     return filter_MZ
 
 
+def filter_spectra_with_same_int(MZ_int, th=100):
+    dict_int = {}
+    for i in range(len(MZ_int)):
+        if MZ_int[i][1] in dict_int.keys():
+            dict_int[MZ_int[i][1]] += 1
+        else:
+            dict_int[MZ_int[i][1]] = 1
+    filter_MZ = []
+    for i in range(len(MZ_int)):
+        if MZ_int[i][1] == 0 and (len(filter_MZ) == 0 or filter_MZ[-1][1] != 0):
+            filter_MZ.append(MZ_int[i])
+            continue
+        if dict_int[MZ_int[i][1]] <= th:
+            filter_MZ.append(MZ_int[i])
+    return filter_MZ
+
+
+def filter_spectra_noise(MZ_int, min_int=300):
+    filter_MZ = []
+    for i in range(len(MZ_int)):
+        if MZ_int[i][1] > min_int:
+            filter_MZ.append(MZ_int[i])
+    return filter_MZ
+
+
 def format_mz(peaks):
     filter_MZ = []
     for i in range(len(peaks)):
-        if peaks[i][0] >= 350:
+        if peaks[i][0] >= 0:  # 350
             filter_MZ.append([np.round(peaks[i][0], 4), peaks[i][1]])
     return filter_MZ
 
@@ -58,7 +83,7 @@ def match_peak_ppm(peaks, max_int, candidates, fit_list, ppm):
     fit_list: Isotope_dist_fit.pk
     返回 匹配数目
     """
-    dict_change_start_list, isotopic_list, dict_list = get_isotopic(peaks, fit_list, ppm, 5, 5, 0)
+    dict_score_list, dict_list, dict_the_iso_list = get_isotopic(peaks, fit_list, ppm, 5, 5, 0)
     exp_isp = get_exp_isp(dict_list, max_int)
     exp_peaks = []  # 将exp_isp中每个元素的前3个峰合并起来，方便后续使用滑动窗口法
     num_matched_dict = {}
@@ -175,7 +200,7 @@ def merge_peaks_old(peaks):
     return new_peaks, max_int
 
 
-def merge_peaks(peaks):
+def merge_peaks(peaks, max_int=0, threshold=0.2):
     """
     对峰分段 + 求质心,前开后闭(区分分割点算在前一个峰里)，这里采用先求出相对强度，再求质心，也可以 先求质心，再计算相对强度
 
@@ -196,6 +221,8 @@ def merge_peaks(peaks):
         count = 1
     is_up = True
     for i in range(1, len(peaks)):
+        if peaks[i][0]>=348.5:
+            aa = 0
         if is_up:  # 上升阶段
             mz_abs_cal += peaks[i][0] * peaks[i][1]
             intensity_abs_cal += peaks[i][1]
@@ -207,6 +234,123 @@ def merge_peaks(peaks):
                     new_peaks.append([np.round(last_mz_abs_cal / last_intensity_abs_cal, 5),
                                       last_intensity_abs_cal])
                     max_int = max(max_int, last_intensity_abs_cal)
+                else:
+                    count += last_count
+                    mz_abs_cal += last_mz_abs_cal
+                    intensity_abs_cal += last_intensity_abs_cal
+                is_up = False
+                last_peak_top = peaks[i - 1][1]
+        else:
+            if peaks[i][1] <= peaks[i - 1][1]:  # 下降阶段
+                mz_abs_cal += peaks[i][0] * peaks[i][1]
+                intensity_abs_cal += peaks[i][1]
+                if peaks[i][1] != 0.0:
+                    count += 1
+            else:  # 下降的拐点
+                last_peak_bottom = peaks[i - 1][1]
+                last_count = count
+                last_mz_abs_cal = mz_abs_cal
+                last_intensity_abs_cal = intensity_abs_cal
+
+                is_up = True
+                count = 1
+                mz_abs_cal = peaks[i][0] * peaks[i][1]
+                intensity_abs_cal = peaks[i][1]
+    # 少最后一个峰
+    # new_peaks = peaks
+    for i in range(len(new_peaks)):
+        new_peaks[i].append(new_peaks[i][1] / max_int)
+    return new_peaks, max_int
+
+def is_min(peaks,idx, win=5): ## 判断给定idx的峰是否是i，i+win中最小的
+    end = len(peaks)-1
+    if idx+win <end:
+        end = idx+win
+    min_peaks = peaks[idx][1]
+    for i in range(idx+1, end+1):
+        if peaks[i][1] > 3 * min_peaks:
+            return True
+        if min_peaks > peaks[i][1]:
+            return False
+    return True
+
+
+
+def merge_peaks_simple(peaks, max_int=0, threshold=0.4):
+    signal_list = []
+    for i in range(0,len(peaks)-1):
+        signal_list.append(peaks[i+1][1]-peaks[i][1])
+    signal_list.append(0)
+    new_peaks = []
+    tmp_max = 0
+    tmp_mz = []
+    tmp_intensity = []
+    for i in range(len(peaks)):
+        if tmp_max<peaks[i][1]:
+            tmp_max = peaks[i][1]
+        if signal_list[i-1]<=0 and not signal_list[i]<=0:
+            if is_min(peaks,i,3):
+                tmp_int = peaks[i][1]
+                if tmp_int <= tmp_max * threshold:
+                    new_mz = np.sum(np.multiply(np.array(tmp_mz),np.array(tmp_intensity)))/np.sum(tmp_intensity)
+                    new_int = np.sum(tmp_intensity)
+                    if max_int < new_int:
+                        max_int = new_int
+                    if not np.isnan(new_mz):
+                        new_peaks.append([np.round(new_mz,5),new_int])
+                    tmp_mz = []
+                    tmp_intensity = []
+                    tmp_max = 0
+                else:
+                    tmp_mz.append(peaks[i][0])
+                    tmp_intensity.append(peaks[i][1])
+            else:
+                tmp_mz.append(peaks[i][0])
+                tmp_intensity.append(peaks[i][1])
+        else:
+            tmp_mz.append(peaks[i][0])
+            tmp_intensity.append(peaks[i][1])
+    for i in range(len(new_peaks)):
+        new_peaks[i].append(new_peaks[i][1] / max_int)
+    return new_peaks, max_int
+
+
+
+def merge_peaks_with_original_mz(peaks, max_int=0, threshold=0.2):
+    """
+    对峰分段 + 求质心,前开后闭(区分分割点算在前一个峰里)，这里采用先求出相对强度，再求质心，也可以 先求质心，再计算相对强度
+
+    峰的截断：降低：峰底高度 <= 左侧峰高 *  α
+            升高：峰底高度 <= 右侧峰高 *  α
+            同时满足降低和升高高度差阈值时，截断峰
+    相对只进行波形合并的merge_peaks_old()，峰的数目减少 30%
+    """
+    #
+
+    new_peaks = []
+    count, last_count = 0, 0
+    high_peak_int, high_peak_mz = 0, 0
+    last_peak_top, last_peak_bottom = 0, 0
+    mz_abs_cal, last_mz_abs_cal = peaks[0][0] * peaks[0][1], 0
+    intensity_abs_cal, last_intensity_abs_cal = peaks[0][1], 0
+    if peaks[0][1] > 0.0:
+        count = 1
+    is_up = True
+    for i in range(1, len(peaks)):
+        if high_peak_int < peaks[i][1]:
+            high_peak_mz = peaks[i][0]
+            high_peak_int = peaks[i][1]
+        if is_up:  # 上升阶段
+            mz_abs_cal += peaks[i][0] * peaks[i][1]
+            intensity_abs_cal += peaks[i][1]
+            if peaks[i][1] != 0.0:
+                count += 1
+            if peaks[i][1] < peaks[i - 1][1]:  # 上升的拐点
+                # 判断左侧的波谷是否要截断成峰
+                if last_peak_bottom < last_peak_top * threshold and last_peak_bottom < peaks[i - 1][1] * threshold:
+                    new_peaks.append([high_peak_mz, last_intensity_abs_cal])
+                    max_int = max(max_int, last_intensity_abs_cal)
+                    high_peak_int = 0
                 else:
                     count += last_count
                     mz_abs_cal += last_mz_abs_cal
@@ -232,6 +376,7 @@ def merge_peaks(peaks):
                 mz_abs_cal = peaks[i][0] * peaks[i][1]
                 intensity_abs_cal = peaks[i][1]
     # 少最后一个峰
+    # new_peaks = peaks
     for i in range(len(new_peaks)):
         new_peaks[i].append(new_peaks[i][1] / max_int)
     return new_peaks, max_int
@@ -253,10 +398,43 @@ def align_peaks(peaks, max_int, candidates, ppm, delta):
     # delta = align_grid_search(peaks, max_int, candidates, fit_list, window=0.1, steps=10, ppm=ppm)
     print('delta',delta)
     for i in range(0, len(peaks)):
-        peaks[i][0] = np.round(peaks[i][0] + delta+0.0535, 5)
-    return peaks, delta+0.0565
-           # +1.15036
-           # +0.0535
+        peaks[i][0] = np.round(peaks[i][0] + delta, 5)
+    return peaks, delta
+    # +1.15036
+    # +0.0535
+
+## 新的过滤方法 测试
+def get_mean_of_win(sp_df, win=1, step=0.5):
+    sp_df['key1'] = sp_df['mz']//win
+    sp_df['key2'] = (sp_df['mz']+0.5)//win -step
+    dict_mean = {}
+    for x in sp_df['key1'].unique():
+        m = np.mean(sp_df[sp_df['key1']==x]['Int'])
+        dict_mean[x]=m
+    for x in sp_df['key2'].unique():
+        m = np.mean(sp_df[sp_df['key2']==x]['Int'])
+        dict_mean[x]=m
+    return sp_df,dict_mean
+def find_min_mean(dict_mean, start, win=5):
+    min_mean = -1
+    for i in np.arange(start-win/2, start+win/2+0.1, 0.5):
+        if i in dict_mean.keys():
+            tmp = dict_mean[i]
+            if min_mean <0 or tmp< min_mean:
+                min_mean = tmp
+    if min_mean < 0:
+        min_mean = 0
+    return min_mean
+def label_noise(sp_df, dict_mean, win=5):
+    noise_th = []
+    sp_df['noise'] =0
+    for x in sp_df['key1'].unique():
+        # print('x',x)
+        th = find_min_mean(dict_mean,x)
+        noise_th.append([x, th])
+        sp_df.loc[sp_df[sp_df['key1']==x][sp_df['Int']<=th].index.tolist(),'noise']=1
+    return sp_df, np.array(noise_th)
+
 
 
 # 预处理的整个流程：峰合并、峰过滤、校准谱
@@ -268,19 +446,39 @@ def pre_process_data(filter_MZ, max_int, fit_list, ppm=10, bound_th=0.001, bound
     num_matched = match_peak_ppm(filter_MZ, max_int, candidates, fit_list, ppm)
     print("baseline:", "max_int=" + str(max_int), "peak_num=" + str(len(filter_MZ)), "matched_num=" + str(num_matched))
     '''
-
+    th = 1000
     filter_MZ = format_mz(filter_MZ)
+    save_test = pd.DataFrame(filter_MZ)
+    save_test.to_csv('data/orginal_peak.csv', header=True, index=None)
     # 原始峰
     # num_matched = match_peak_ppm(filter_MZ, max_int, candidates, fit_list, ppm)
     # print("origin:", "peak_num=" + str(len(filter_MZ)), "matched_num=" + str(num_matched))
-
+    # 初始过滤机器噪音
+    filter_MZ = filter_spectra_with_same_int(filter_MZ, th)
+    save_test = pd.DataFrame(filter_MZ)
+    save_test.to_csv('data/filter1_peak.csv', header=True, index=None)
     # 峰合并
-    filter_MZ, max_int = merge_peaks(filter_MZ)  # 2.针对局部进行峰过滤，只保留局部最高峰
+    # filter_MZ, max_int = merge_peaks_with_original_mz(filter_MZ, max_int, 0.6)  # 2.针对局部进行峰过滤，只保留局部最高峰
+    # filter_MZ, max_int = merge_peaks(filter_MZ, max_int, 0.2)  # 2.针对局部进行峰过滤，只保留局部最高峰
+    filter_MZ, max_int = merge_peaks_simple(filter_MZ, max_int, 0.4)
+    save_test = pd.DataFrame(filter_MZ)
+    save_test.to_csv('data/merged.csv', header=True, index=None)
     # num_matched = match_peak_ppm(filter_MZ, max_int, candidates, fit_list, ppm)
     # print("merge:", "max_int=" + str(max_int), "peak_num=" + str(len(filter_MZ)), "matched_num=" + str(num_matched))
 
     # 过滤
-    filter_MZ = filter_spectra(filter_MZ, bound_th, max_int, bound_intensity)  # 3.过滤谱文件，去除强度小于300且相对丰度低于0.001的峰
+
+    df_B = pd.DataFrame(filter_MZ)
+    df_B.columns = ['mz', 'Int', 'Int_R']
+    df_B, dict_mean = get_mean_of_win(df_B)
+    df_B, noise_th = label_noise(df_B, dict_mean)
+    df_noise = df_B[df_B['noise'] == 1]
+    df_denoise = df_B[df_B['noise']==0]
+    filter_MZ = np.array(df_denoise[['mz','Int','Int_R']]).tolist()
+
+    # filter_MZ = filter_spectra(filter_MZ, bound_th, max_int, bound_intensity)  # 3.过滤谱文件，去除强度小于300且相对丰度低于0.001的峰
+    save_test = pd.DataFrame(filter_MZ)
+    save_test.to_csv('data/final_filter.csv', header=True, index=None)
     # num_matched = match_peak_ppm(filter_MZ, max_int, candidates, fit_list, ppm)
     # print("filter:", "th = 0.001", "min_int = 300 ", "peak_num=" + str(len(filter_MZ)),
     #       "matched_num=" + str(num_matched))
@@ -299,8 +497,8 @@ def get_filter_MZ_pk(filter_MZ_path, spectra_path, ppm=10, bound_th=0.001, bound
         filter_MZ, max_int = read_spectra(spectra_path)
         fit_list = get_fit_pk('data/Isotope_dist_fit.pk')  # 1.寻找同位素峰，并返回记录不同价态的字典列表
         t0 = time.time()
-        filter_MZ, max_int= pre_process_data(filter_MZ, max_int,fit_list, ppm, bound_th,
-                                                     bound_intensity)
+        filter_MZ, max_int = pre_process_data(filter_MZ, max_int, fit_list, ppm, bound_th,
+                                              bound_intensity)
         # save_filter_MZ(filter_MZ, filter_MZ_path)  # 保存过滤结果
         t1 = time.time()
         print(t1 - t0)

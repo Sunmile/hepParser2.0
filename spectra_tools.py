@@ -1,17 +1,36 @@
 """
 author:houmeijie
 """
+import colorsys
 import os
 import random
 import subprocess
 import platform
 import sys
 import copy
-
+import numpy as np
+import xml.dom.minidom as xml
+from brainpy import isotopic_variants
 from PyQt5.QtCore import *
 
 from Hp_opt import data_process
 
+
+dict_atom = {}
+dict_atom['H1'] = 1.00783
+dict_atom['H2'] = 2.01410
+dict_atom['C12'] = 12.00000
+dict_atom['C13'] = 13.00335
+dict_atom['N14'] = 14.00307
+dict_atom['N15'] = 15.00011
+dict_atom['O16'] = 15.99492
+dict_atom['O17'] = 16.99913
+dict_atom['O18'] = 17.99916
+dict_atom['S32'] = 31.97207
+dict_atom['S33'] = 32.97146
+dict_atom['S34'] = 33.96787
+dict_atom['S36'] = 35.96708
+dict_atom['Na'] = 22.98977
 
 # 用于转换raw文件
 class ConvertWorker(QThread):
@@ -40,6 +59,59 @@ class ConvertWorker(QThread):
             if subprocess.Popen.poll(cmd) == 0:  # 判断子进程是否结束
                 break
         os.chdir('../')
+
+
+# 用于转换mzML文件的TIC图,谱文件借助于pymzml
+class mzMLWorker(QThread):
+    sinXml = pyqtSignal(list)
+
+    def __init__(self, parent=None, xmlFileName=None):
+        super(mzMLWorker, self).__init__(parent)
+        self.xmlFileName = xmlFileName
+
+    def run(self):
+        xmlInfo = self.loadXML(self.xmlFileName)
+        self.sinXml.emit(xmlInfo)
+
+    # 使用minidom解析器打开 XML 文档
+    def loadXML(self, fileName):
+        DOMTree = xml.parse(fileName)
+        root = DOMTree.documentElement
+
+        times, tics, scans = [], [], []
+        maxTic, maxScan = 0.0, 0
+        num = 0
+        scan = 0
+        spectrums = root.getElementsByTagName("spectrum")
+
+        for spectrum in spectrums:
+            # scan = spectrum.getAttribute("id").split()[2].split('=')[1]
+            # msNode, ticNode, timeNode = spectrum.childNodes[3], spectrum.childNodes[13], spectrum.childNodes[15]
+            mslevel, tic, startTime = None, None, None
+            for i in range(1, len(spectrum.childNodes), 2):
+                node = spectrum.childNodes[i]
+                if mslevel is None and node.attributes['name'].value == "ms level":
+                    mslevel = node.attributes['value'].value
+                if tic is None and node.attributes['name'].value == "total ion current":
+                    tic = float(node.attributes['value'].value)
+                if startTime is None and node.localName == 'scanList':
+                    scanNode = node.childNodes[3]
+                    for j in range(1, len(scanNode.childNodes), 2):
+                        if scanNode.childNodes[j].attributes['name'].value == "scan start time":
+                            startTime = float(scanNode.childNodes[j].attributes['value'].value)
+                            break
+
+            if mslevel == '1' or mslevel=='2':
+                scan += 1
+                num += 1
+                times.append(startTime)
+                tics.append(tic)
+                scans.append(scan)
+                if tic > maxTic:
+                    maxTic = tic
+                    maxScan = scan
+        print("mzml:", num, maxScan, maxTic, "xmlSpectrums:", len(spectrums))
+        return [times, tics, scans, maxScan]
 
 
 # 用于进行数据处理
@@ -102,7 +174,7 @@ def format_peaks(peaks):
 def format_peaks_350(peaks):
     xs, ys = [], []
     for line in peaks:
-        if line[0] >= 350:
+        if line[0] >= 0:
             xs += line[0], line[0], line[0]
             ys += 0.0, line[1], 0.0
     return xs, ys
@@ -148,7 +220,7 @@ def get_isotope(peak_dicts, exp_isp):
 
 
 # 转换标注的信息
-# label是约定好的五元组，[[mass, Z, component, lose , score],[mass, Z component, lose , score]]
+# label是约定好的六元组，[[mass, Z, HNa,component, lose , score],[mass, Z HNa, component, lose , score]]
 # dict_mass_comp,key:理论中性质量，value: 理论结构分子组成
 # dict_mass_flag,key:理论中性质量，value: flag 数组， flag[0]: 实验谱匹配m/z,OR 理论中性mass-1, flag[1]: 电荷数，OR 0
 # dict_mass_family,key:理论中性质量，value: 衍生 label 数组 index
@@ -164,9 +236,54 @@ def get_all_struct(label_info):
         for ele in comp:
             per_struct += str(ele) + ","
         per_struct = "[" + per_struct[:-1] + "]"
-        right_comp.append([per_struct, '{:.2f}'.format(label[tmp_index[0]][4])])
+        right_comp.append([per_struct, '{:.2f}'.format(label[tmp_index[0]][5])])
 
     return right_comp, key_with_order
+
+def get_molecular_mass(atom_list):
+    Mass = 0
+    atom_mass = [dict_atom['H1'], dict_atom['C12'], dict_atom['N14'],
+                 dict_atom['O16'], dict_atom['S32'], dict_atom['Na']]
+    for i in range(len(atom_list)):
+        Mass += atom_mass[i] * atom_list[i]
+    return np.round(Mass, 5)
+
+def get_theory_mz(z, hna, comp, lost):
+    comp_atoms = [
+        [8, 6, 0, 6, 0],  # 不饱和糖醛酸 HexA
+        [10, 6, 0, 7, 0],  # 饱和糖醛酸  GlcA
+        [13, 6, 1, 5, 0],  # 葡萄糖胺   GlcN
+        [4, 2, 0, 2, 0],  # 乙酰基    Ac
+        [2, 0, 0, 4, 1],  # 硫酸基    SO3
+        [11, 6, 1, 4, 0],  # 内醚糖    Levoglucosan
+        [12, 6, 0, 5, 0]  # 甘露糖(dicp jin)    Man
+    ]
+    comp_atoms = np.array(comp_atoms)
+    tmp_atoms = np.array([2, 0, 0, 1, 0])  # 带一个水
+    H2O = np.array([2, 0, 0, 1, 0])  # 任两个基团结合，都脱一个水
+    for i in range(len(comp)):
+        tmp_atoms = tmp_atoms + comp_atoms[i] * comp[i] - H2O * comp[i]
+    lost_list = [[0, 0, 0, 3, 1],  # 丢失SO3
+                 [1, 0, 1, 0, 0],  # 丢失NH
+                 [1, 0, 1, 3, 1],  # 丢失NHSO3
+                 [0, 1, 0, 2, 0]]  # 丢失COO
+    lost_list = np.array(lost_list)
+    for i in range(len(lost)):
+        tmp_atoms = tmp_atoms - lost_list[i] * lost[i]
+    tmp_com = tmp_atoms
+    mass = get_molecular_mass(tmp_atoms)
+    tmp_lwh = {}
+    tmp_lwh['H'] = tmp_com[0]
+    tmp_lwh['C'] = tmp_com[1]
+    tmp_lwh['N'] = tmp_com[2]
+    tmp_lwh['O'] = tmp_com[3]
+    tmp_lwh['S'] = tmp_com[4]
+    tmp_distribution = isotopic_variants(tmp_lwh, npeaks=5, charge=-z)
+    tmp_peak = tmp_distribution[0]
+    diff_mass = hna[1] * (dict_atom['Na'] - 1)  # 计算与只脱H的mass的差距
+    diff_mass = diff_mass / np.abs(z)
+    mz = np.round(tmp_peak.mz + diff_mass, 4)
+    return mass, mz
 
 
 def get_labels(label_info, peak_dict, lose_ion, new_key_with_order):
@@ -183,7 +300,7 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order):
 
     for mass in new_key_with_order:
         tmp_index = dict_mass_family[mass]
-        comp_copy.append([mass, label[tmp_index[0]][4]])
+        comp_copy.append([mass, label[tmp_index[0]][5]])
 
     comp_copy.sort(key=lambda x: x[1], reverse=True)
     for i, element in enumerate(comp_copy):
@@ -198,14 +315,15 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order):
         for ele in comp:
             per_struct += str(ele) + ","
         per_struct = "[" + per_struct[:-1] + "]"
-        right_comp.append([per_struct, '{:.2f}'.format(label[tmp_index[0]][4]), num, key_id[mass]])
+        right_comp.append([per_struct, '{:.2f}'.format(label[tmp_index[0]][5]), num, key_id[mass]])
         struct_id[per_struct] = num
         for id in tmp_index:
-            mz, z, _, lose, score, th = label[id]  # _就是comp
+            mz, z, hna, _, lose, score, th = label[id]  # _就是comp
             xy.append((mz, peak_dict[mz]))
             if (mz, peak_dict[mz]) not in mass_label.keys():
                 mass_label[(mz, peak_dict[mz])] = []  # 分别是分子式序号和颜色序号
-            mass_label[(mz, peak_dict[mz])].append([comp, lose, z, score, th, num, key_id[mass]])
+            hna = np.array(hna)
+            mass_label[(mz, peak_dict[mz])].append([comp, lose, z, hna, score, th, num, key_id[mass]])
 
     # 标注的峰
     xy = list(set(xy))
@@ -217,20 +335,26 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order):
         mass_struct_tips[key] = "$m/z : " + str(key[0]) + "$ \n$intensity : " + str(key[1]) + "$\n" + struct_info
 
         # 转换label为5个list
-    mass_list, z_list, comp_list, lose_list, score_list, th_list = [], [], [], [], [], []
+    mass_list, z_list, hna_list, the_mz_list, comp_list, the_mass_list, lose_list, score_list, th_list = \
+        [], [], [], [], [], [], [], [], []
 
     label_copy = copy.deepcopy(label)
     label_copy.sort(key=lambda x: x[0])
     for line in label_copy:
-        new_labels.append([line[0], line[1], line[5], line[2], line[3]])
+        new_labels.append([line[0], line[1], line[2][0],line[2][1], line[6], line[3], line[4]])
         mass_list.append(line[0])
         z_list.append(line[1])
-        comp_list.append(line[2])
-        lose_list.append(line[3])
+        hna_list.append(line[2])
+        tmp_mass,tmp_mz = get_theory_mz(line[1],line[2],line[3],line[4])
+        the_mz_list.append(tmp_mz)
+        the_mass_list.append(tmp_mass)
+        comp_list.append(line[3])
+        lose_list.append(line[4])
         # score_list.append(line[4])
-        th_list.append(line[5])
+        th_list.append(line[6])
+    hna_list = np.array(hna_list)
     return xy, mass_label, mass_struct_tips, right_comp, struct_id, \
-           (mass_list, z_list, th_list, comp_list, lose_list), new_labels
+           (mass_list, z_list,hna_list,the_mz_list, th_list, comp_list, lose_list, the_mass_list), new_labels
 
 
 # 寻找衍生峰的mz、inten
@@ -240,16 +364,17 @@ def get_family(label_info, peak_dict):
     for key in dict_mass_family.keys():
         mz = dict_mass_flag[key][0]
         index_list = dict_mass_family[key]
-        mz_list, inten_list, comp_list, lose_list, z_list, score_list = [], [], [], [], [], []
+        mz_list, inten_list, comp_list, lose_list, z_list,hna_list, score_list = [], [], [], [], [], [],[]
         for index in index_list:
-            f_mz, Z, component, lose, score, th = label[index]
+            f_mz, Z, hna,component, lose, score, th = label[index]
             mz_list.append(f_mz)
             inten_list.append(peak_dict[f_mz])
             comp_list.append(component)
             lose_list.append(lose)
             z_list.append(Z)
+            hna_list.append(hna)
             score_list.append(score)
-        mass_family[key] = [mz_list, inten_list, comp_list, lose_list, z_list, score_list]
+        mass_family[key] = [mz_list, inten_list, comp_list, lose_list, z_list, hna_list, score_list]
     return mass_family
 
 
@@ -352,9 +477,11 @@ def format_struct_2(label_list, lose_ion):
             else:
                 per_lost += "-" + str(label[1][i]) + lose_ion[i]
         per_struct += per_lost + "^{" + str(label[2]) + "-}"
+        tmp_hna = label[3]
+        per_struct += '-'+str(tmp_hna[0])+'H+'+str(tmp_hna[1])+'Na'
         structs.append(per_struct)
         struct_info += '$' + str(label[-2]) + " : " + per_struct + '$ \n'
-        scores.append(round(label[3], 5))
+        scores.append(round(label[4], 5))
     struct_info = struct_info + " "
     return struct_info[:-2], structs, scores
 
@@ -386,6 +513,31 @@ def format_comp(comp_list, z):
     for i in range(len(comp_list)):
         comp_info += str(comp_list[i]) + ","
     return "$[" + comp_info[:-1] + "]^{" + str(z) + "-}$"
+
+
+def get_n_hls_colors(num):
+    hls_colors = []
+    i = 0
+    step = 360.0 / num
+    while i < 360:
+        h = i
+        s = 90 + random.random() * 10
+        l = 50 + random.random() * 10
+        _hlsc = [h / 360.0, l / 100.0, s / 100.0]
+        hls_colors.append(_hlsc)
+        i += step
+
+    return hls_colors
+
+
+def format_color(color):
+    digit = list(map(str, range(10))) + list("ABCDEF")
+    string = '#'
+    for i in range(0, 3):
+        a1 = int(color[i] * 255) // 16
+        a2 = int(color[i] * 255) % 16
+        string += digit[a1] + digit[a2]
+    return string
 
 
 def dataClosed():

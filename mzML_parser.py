@@ -407,6 +407,6 @@ def loadXML(xmlFileName):
     print("mzML to Mgf:", t1 - t)
 
 
-loadXML("/Users/hou/Downloads/20201117_HEP_F2-F2_CHAI_3uL_NEG IDA_001.mzML")
+# loadXML("/Users/hou/Downloads/20201117_HEP_F2-F2_CHAI_3uL_NEG IDA_001.mzML")
 # parser = XmlParser("")
 # infos = parser.loadXML()

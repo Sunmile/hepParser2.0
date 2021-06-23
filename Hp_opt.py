@@ -42,7 +42,7 @@ def read_spectra(dir):
             info = line.strip('\n').split(' ')
             MZ = float(info[0])
             intensity = float(info[1])
-            if MZ >= 350:
+            if MZ >= 0:  # 350
                 if intensity > max_int:
                     max_int = intensity
                 MZ_int.append([np.round(MZ, 5), intensity])
@@ -61,7 +61,7 @@ def get_sp_input(Mz_list):
     for i in Mz_list:
         MZ = float(i[0])
         intensity = float(i[1])
-        if MZ >= 350:
+        if MZ >= 0:  # 350
             if intensity > max_int:
                 max_int = intensity
             MZ_int.append([MZ, intensity])
@@ -101,23 +101,29 @@ def get_distance_list(MZ_list):
     return distance_list
 
 
-def get_one_Z_isotopic(MZ_list, fit_list, dict_list, ppm=10, Z=1, isotopic_num=5, cos_sim_th=0):
+def get_one_Z_isotopic(MZ_list, fit_list, dict_list, ppm=10, Z=1, isotopic_num=5, js_sim_th=0.0):
     fit_list = fit_list[0:isotopic_num]
+    max_int = 0
+    for i in range(len(MZ_list)):
+        if MZ_list[i][1]> max_int:
+            max_int = MZ_list[i][1]
     visited_list = np.zeros(len(MZ_list))
     isotopic_record = np.zeros((len(MZ_list), isotopic_num))
     tmp_com = {}
-    if Z == 2:
-        tmp_com = dict_list[0]
-    if Z == 4:
-        tmp_com = dict_list[1]
+    # if Z == 2:
+    #     tmp_com = dict_list[0]
+    # if Z == 4:
+    #     tmp_com = dict_list[1]
     dict = {}
-    dict_filter = {}
+    dict_theo = {}
     dict_cos = {}
     # if Z ==1 or Z==2:
     #     ppm = ppm*2
     for i in range(len(MZ_list)):
         if visited_list[i] == 0:
             M = MZ_list[i][0]
+            # if M == 581.93437:
+            #     a =1
             flag_M = M
             flag_num = 1
             mass_l = [M]
@@ -148,65 +154,39 @@ def get_one_Z_isotopic(MZ_list, fit_list, dict_list, ppm=10, Z=1, isotopic_num=5
                     if flag_num >= isotopic_num:
                         break
             if np.count_nonzero(isotopic_record[i]) >= 3 \
-                    and np.sum(isotopic_record[i]) >= 10000 \
+                    and np.sum(isotopic_record[i]) >= max_int*0.005 \
                     and isotopic_record[i][1] + isotopic_record[i][3] > 0:
                 theory_distribution = [x(M * Z) if x(M * Z) > 0 else 0 for x in fit_list]
-                tmp_cos_sim = 1 - get_JS(theory_distribution, isotopic_record[i])
-                if tmp_cos_sim > cos_sim_th:
+                tmp_js_sim = 1 - get_JS(theory_distribution, isotopic_record[i])
+                if tmp_js_sim > js_sim_th:
                     if M in tmp_com.keys():
                         tmp_com.pop(M)
                     dict[M] = [mass_l, isotopic_record[i]]
-                    for x in tmp_vis:
-                        visited_list[x] = 1
-    if Z == 2:
-        dict_list[0] = tmp_com
-    if Z == 4:
-        dict_list[1] = tmp_com
-    # for m in dict.keys():
-    #     test_mass_list, test_Int_list = dict[m]
-    #     max_cos_sim = 0
-    #     max_cos_pos = -2
-    #     max_cos_Int_list = []
-    #     max_cos_theory_list = []
-    #     for start_p in range(-2, 3):
-    #         tmp_m = m + start_p
-    #         theory_distribution = [x(tmp_m * Z) if x(tmp_m * Z) > 0 else 0 for x in fit_list]
-    #         test_distribution = [test_Int_list[i] if 0 <= i < isotopic_num
-    #                              else 0 for i in range(start_p, isotopic_num + start_p)]
-    #         tmp_cos_sim = cos_sim(theory_distribution, test_distribution)
-    #         if tmp_cos_sim > max_cos_sim:
-    #             max_cos_sim = tmp_cos_sim
-    #             max_cos_pos = start_p
-    #             max_cos_Int_list = test_distribution.copy()
-    #             max_cos_theory_list = theory_distribution.copy()
-    #     if max_cos_sim > cos_sim_th:
-    #         tmp_m = m + max_cos_pos
-    #         dict_filter[tmp_m] = max_cos_Int_list
-    #         dict_cos[tmp_m] = np.round(max_cos_sim, 5)
-    # print(test_mass_list, np.round(max_cos_sim, 5), max_cos_Int_list, np.around(max_cos_theory_list, decimals=4))
-    return dict_filter, dict_cos, dict
+                    dict_theo[M] = [mass_l, theory_distribution]
+                    dict_cos[M] = tmp_js_sim
+                    # for x in tmp_vis:
+                    #     visited_list[x] = 1
+    # if Z == 2:
+    #     dict_list[0] = tmp_com
+    # if Z == 4:
+    #     dict_list[1] = tmp_com
+    return dict_cos, dict, dict_theo
 
 
 # 从过滤后的质谱中找所有的同位素峰，返回每个价态的同位素峰的字典，以及所有同位素峰的合并list
-def get_isotopic(MZ_list, fit_list, ppm=10, max_Z=5, isotopic_num=4, cos_sim_th=0):
+def get_isotopic(MZ_list, fit_list, ppm=10,max_Z=7, isotopic_num=4, js_sim_th=0.0):
     dict_list = []
-    dict_change_start_list = []
-    dict_cos_list = []
-    isotopic_list_z = []
+    dict_score_list = []
+    dict_the_iso_list = []
     for z in range(1, max_Z + 1):
-        isotopic_dict, dict_cos, dict_original = get_one_Z_isotopic(MZ_list, fit_list, dict_list, ppm, z, isotopic_num,
-                                                                    cos_sim_th)
-        dict_change_start_list.append(isotopic_dict)
+        dict_score, dict_original, dict_the_iso = get_one_Z_isotopic(MZ_list, fit_list, dict_list, ppm, z, isotopic_num,
+                                                                    js_sim_th)
+
         dict_list.append(dict_original)
-        dict_cos_list.append(dict_cos)
+        dict_score_list.append(dict_score)
+        dict_the_iso_list.append(dict_the_iso)
         # print('Z='+str(z))
-        iso_list = []
-        for x in isotopic_dict.keys():
-            if x not in iso_list:
-                iso_list.append(x)
-            # print(str(x)+': '+ str(isotopic_dict[x]))
-        isotopic_list_z.append(iso_list)
-    return dict_change_start_list, dict_cos_list, dict_list
+    return dict_score_list, dict_list, dict_the_iso_list
 
 
 # 根据分子式计算分子质量
@@ -220,36 +200,184 @@ def get_molecular_mass(atom_list):
 
 
 # 考虑所有可能的肝素组成，返回所有肝素组成式
-
 def enumerate_component(n=20):
     all_list = []  # bubaohe, baohe, putaotangan, yixian, liusuan, neimi, ganlu
-    for i in range(0, n):  # i 糖醛酸数目
-        if i - 1 <= 0:
-            num_bao = [i, i + 1]
-        else:
-            num_bao = [i - 1, i, i + 1]
-        for j in num_bao:  # j 葡萄糖胺数目
-            if j == i + 1:
-                num_bu = [0, 1]
-                num_nei = [0]
-                num_gan = [0, 1]
-            elif j == i:
-                num_bu = [0, 1]
-                num_nei = [0, 1]
-                num_gan = [0]
+    count = 0
+    num_bu = [0, 1]
+    for x in num_bu:
+        for i in range(0, n):
+            if x == 0:
+                if i == 0:
+                    num_bao = [i, i + 1]
+                else:
+                    num_bao = [i - 1, i, i + 1]
             else:
-                num_bu = [0]
-                num_nei = [0, 1]
-                num_gan = [0]
-            for x in num_bu:
+                num_bao = [i, i + 1]
+            for j in num_bao:
+                if j == i + 1:
+                    num_nei = [0]
+                    num_gan = [0]
+                elif j == i - 1:
+                    num_nei = [0, 1]
+                    num_gan = [0, 1]
+                else:
+                    if x == 0:
+                        num_nei = [0]
+                        num_gan = [0]
+                    else:
+                        num_nei = [0, 1]
+                        num_gan = [0, 1]
                 for y in num_nei:
                     for z in num_gan:
+                        if y == 1 and z == 1:
+                            continue
                         for m in range(j):
-                            for n in range(3 * j - m + i + x + y + z):
-                                tmp_comp = [x, i, j, m, n, y, z]
+                            for p in range(3 * j - m + i + x + y + z):
+                                tmp_comp = [x, i, j, m, p, y, z]
                                 all_list.append(tmp_comp)
+                                count += 1
+                                print(count, tmp_comp)
+
     print('All components counts', len(all_list))
     return all_list
+
+
+## 根据DP值枚举可能的结构
+
+def enumerate_enoxaparin(dp):
+    dict_dp_comp = {} # dp和组分的字典
+    dict_l_dp_comp = {} # 单数dp 保留左侧 的字典
+    dict_r_dp_comp = {} # 单数dp 保留右侧 的字典
+
+    dp2 = [
+        [1, 0, 1, 0, 0, 0, 0],
+        [1, 0, 1, 0, 1, 0, 0],
+        [1, 0, 1, 0, 2, 0, 0],
+        [1, 0, 1, 0, 3, 0, 0],
+        [1, 0, 1, 0, 4, 0, 0],
+        [1, 0, 1, 1, 0, 0, 0],
+        [1, 0, 1, 1, 1, 0, 0],
+        [1, 0, 1, 1, 2, 0, 0],
+        [1, 0, 1, 1, 3, 0, 0],
+        [1, 0, 0, 0, 1, 1, 0],
+        [1, 0, 0, 0, 2, 1, 0],
+    ] ## dp为2时可能 list
+    dict_dp_comp[2]=dp2
+    dp1l = [
+        [1, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 1, 0, 0],
+    ] ## dp为1且保留左侧
+    dp1r = [
+        [0, 0, 0, 0, 1, 1, 0],
+        [0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 1, 0, 1, 0, 0],
+        [0, 0, 1, 0, 2, 0, 0],
+        [0, 0, 1, 0, 3, 0, 0],
+        [0, 0, 1, 1, 0, 0, 0],
+        [0, 0, 1, 1, 1, 0, 0],
+        [0, 0, 1, 1, 2, 0, 0]
+    ] ## dp为1且保留右侧
+    dp_cell =[
+        [0, 1, 1, 0, 0, 0, 0],
+        [0, 1, 1, 0, 1, 0, 0],
+        [0, 1, 1, 0, 2, 0, 0],
+        [0, 1, 1, 0, 3, 0, 0],
+        [0, 1, 1, 0, 4, 0, 0],
+        [0, 1, 1, 1, 0, 0, 0],
+        [0, 1, 1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 2, 0, 0],
+        [0, 1, 1, 1, 3, 0, 0]
+    ] ## 2糖 单元可能的结构 list
+
+    dp_cell_1 =[
+        [0, 1, 1, 0, 0, 0, 0],
+        [0, 1, 1, 0, 1, 0, 0],
+        [0, 1, 1, 0, 2, 0, 0],
+        [0, 1, 1, 0, 3, 0, 0],
+        [0, 1, 1, 1, 0, 0, 0],
+        [0, 1, 1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 2, 0, 0]
+    ] ## 第一个2糖单元需特殊考虑
+    dict_l_dp_comp[1]=dp1l
+    dict_r_dp_comp[1]=dp1r
+    dict_dp_comp[1]=dp1l+dp1r
+    i = 2
+    while i <= dp:
+        i+=1
+        tmp= dict_dp_comp[i-2]
+        result_list = []
+        if i <=4:
+            for x in tmp:
+                for y in dp_cell_1:
+                    new = np.array(x) + np.array(y)
+                    new = new.tolist()
+                    if new not in result_list:
+                        result_list.append(new)
+        else:
+            for x in tmp:
+                for y in dp_cell:
+                    new = np.array(x)+np.array(y)
+                    new = new.tolist()
+                    if new not in result_list:
+                        result_list.append(new)
+        dict_dp_comp[i] = result_list
+    for i in range(dp):
+        tmp_res = dict_dp_comp[i+1]
+        res_df = pd.DataFrame(tmp_res)
+        # res_df.to_csv('./data/theory_structure/enoxaparin_'+str(i+1)+'.csv',header=None, index=None)
+    return dict_dp_comp
+
+
+def enumerate_dalteparin(dp):
+    dict_dp_comp = {}  # dp和组分的字典
+    dict_l_dp_comp = {}  # 单数dp 保留左侧 的字典
+    dict_r_dp_comp = {}  # 单数dp 保留右侧 的字典
+
+    dp2 = [
+        [0, 1, 0, 0, 0, 0, 1],
+        [0, 1, 0, 0, 1, 0, 1],
+        [0, 1, 0, 0, 2, 0, 1],
+    ]  ## dp为2时可能 list
+    dict_dp_comp[2] = dp2
+    dp1l = [
+        [0, 1, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 1, 0, 0],
+    ]  ## dp为1且保留左侧
+    dp1r = [
+        [0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 1, 0, 1],
+    ]  ## dp为1且保留右侧
+    dp_cell = [
+        [0, 1, 1, 0, 0, 0, 0],
+        [0, 1, 1, 0, 1, 0, 0],
+        [0, 1, 1, 0, 2, 0, 0],
+        [0, 1, 1, 0, 3, 0, 0],
+        [0, 1, 1, 0, 4, 0, 0],
+        [0, 1, 1, 1, 0, 0, 0],
+        [0, 1, 1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 2, 0, 0],
+        [0, 1, 1, 1, 3, 0, 0]
+    ]  ## 2糖 单元可能的结构 list
+    dict_l_dp_comp[1] = dp1l
+    dict_r_dp_comp[1] = dp1r
+    dict_dp_comp[1] = dp1l + dp1r
+    i = 2
+    while i < dp:
+        i += 1
+        tmp = dict_dp_comp[i - 2]
+        result_list = []
+        for x in tmp:
+            for y in dp_cell:
+                new = np.array(x) + np.array(y)
+                new = new.tolist()
+                if new not in result_list:
+                    result_list.append(new)
+        dict_dp_comp[i] = result_list
+    for i in range(dp):
+        tmp_res = dict_dp_comp[i+1]
+        res_df = pd.DataFrame(tmp_res)
+        # res_df.to_csv('./data/theory_structure/dalteparin_'+str(i+1)+'.csv',header=None, index=None)
+    return dict_dp_comp
 
 
 def get_component_mass(one_comp):
@@ -260,7 +388,7 @@ def get_component_mass(one_comp):
         [4, 2, 0, 2, 0],  # 乙酰基    Ac
         [2, 0, 0, 4, 1],  # 硫酸基    SO3
         [11, 6, 1, 4, 0],  # 内醚糖    Levoglucosan
-        [12, 6, 0, 5, 0]  # 甘露糖    Man
+        [12, 6, 0, 5, 0]  # 甘露糖(dicp jin)    Man
     ]
     comp_atoms = np.array(comp_atoms)
     tmp_atoms = np.array([2, 0, 0, 1, 0])  # 带一个水
@@ -315,7 +443,9 @@ def generate_new_composition(filter_list, max_lost_count=20):
     lost_list = [[0, 0, 0, 0, 0],  # 不丢失
                  [0, 0, 0, 3, 1],  # 丢失SO3
                  [1, 0, 1, 0, 0],  # 丢失NH
-                 [1, 0, 1, 3, 1],  # 丢失NHSO3
+                 # [2, 2, 0, 1, 0],  # 丢失 COCH2
+                 # [1, 0, 1, 3, 1],  # 丢失NHSO3
+                 [2, 0, 0, 1, 0],  # 丢失H2O
                  [0, 1, 0, 2, 0]]  # 丢失COO
     all_lost_list = []
     ll = len(filter_list)
@@ -386,14 +516,18 @@ def save_pk(data, dir):
         pk.dump(data, f)
 
 
-def get_comp_pk(dir):
+def get_comp_pk(dir,dp):
+    dir = dir + str(dp)+'.pk'
     if os.path.exists(dir):
         with open(dir, 'rb') as f:
             data = pk.load(f)
         return data
     else:
-        all_list = enumerate_component(20)  # 枚举所有可能肝素分子的构成
-        all_list = filter_component(all_list, 350, 3600)
+        # all_list = enumerate_component(20)  # 枚举所有可能肝素分子的构成
+        # dict_dp_list = enumerate_dalteparin(dp)
+        dict_dp_list = enumerate_enoxaparin(dp)
+        all_list = dict_dp_list[dp]
+        # all_list = filter_component(all_list, 100, 5000)
         dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list = transform_component_to_atom(
             all_list)
         result = [dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list]
@@ -401,15 +535,37 @@ def get_comp_pk(dir):
         return result
 
 
+def get_fit_pk(dir,dp):
+    dir = dir + str(dp) + '.pk'
+    if os.path.exists(dir):
+        with open(dir, 'rb') as f:
+            data = pk.load(f)
+        return data
+    else:
+        # all_list = enumerate_component(20)  # 枚举所有可能肝素分子的构成
+        # dict_dp_list = enumerate_dalteparin(dp)
+        dict_dp_list = enumerate_enoxaparin(dp)
+        all_list = dict_dp_list[dp]
+        all_list = filter_component(all_list, 100, 5000)
+        dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list = transform_component_to_atom(all_list)
+        point_list = get_all_isotope_distribute(all_atoms_list)
+        fit_list = fit_all_point(point_list, 4)
+        save_pk(fit_list, dir)
+        return fit_list
+
 def get_fit_pk(dir):
+    dir = dir + '.pk'
     if os.path.exists(dir):
         with open(dir, 'rb') as f:
             data = pk.load(f)
         return data
     else:
         all_list = enumerate_component(20)  # 枚举所有可能肝素分子的构成
-        all_list = filter_component(all_list, 350, 3600)
-        dict_mass_comp, dict_mass_atom, all_atoms_list, all_mass_list = transform_component_to_atom(all_list)
+        # dict_dp_list = enumerate_dalteparin(dp)
+        # dict_dp_list = enumerate_enoxaparin(dp)
+        # all_list = dict_dp_list[dp]
+        all_list = filter_component(all_list, 100, 5000)
+        dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list = transform_component_to_atom(all_list)
         point_list = get_all_isotope_distribute(all_atoms_list)
         fit_list = fit_all_point(point_list, 4)
         save_pk(fit_list, dir)
@@ -427,7 +583,7 @@ def get_all_isotope_distribute(filter_list):
     all_mass = sorted(all_mass)
     flag = all_mass[0]
     for x in all_mass:
-        if 350 <= x <= 3600 and x - flag > 5:
+        if 100 <= x <= 4000 and x - flag > 5:
             tmp_com = dict_all_mass[x]
             tmp_lwh = {}
             tmp_lwh['H'] = tmp_com[0]
@@ -508,16 +664,22 @@ def cos_sim(vector_a, vector_b):
     return cos
 
 
-def generate_theory_SP(compsition, prob=0.5):
-    all_com, lost_record = generate_new_composition([compsition], 2)
+## is_HNa: 是否以脱H加Na带负电
+## 脱H上限为硫酸根数目加羧基数目
+def generate_theory_SP(atom, component, prob=0.5,max_ion=5, is_HNa=False):
+    # all_com, lost_record = generate_new_composition([atom], 2)
+    all_atom, all_comp, lost_record = [atom],[component],[[0, 0, 0, 0]]
     # pl(all_com)
     lost_comp = []
+    H_Na_count = []
     Z_list = []
     all_mz = []
     # charges = [-1]
-    charges = [-1, -2, -3, -4, -5]
-    for i in range(len(all_com)):
-        x = all_com[i]
+    charges = -np.array(range(1,max_ion+1))
+    # charges = [-1, -2, -3, -4, -5, -6, -7 ]
+    for i in range(len(all_atom)):
+        x = all_atom[i]
+        y = all_comp[i]
         losted = lost_record[i]
         tmp_com = x
         tmp_lwh = {}
@@ -528,17 +690,34 @@ def generate_theory_SP(compsition, prob=0.5):
         tmp_lwh['S'] = tmp_com[4]
         for j in charges:
             tmp_distribution = isotopic_variants(tmp_lwh, npeaks=5, charge=j)
-            tmp_mz = []
-            tmp_int = []
-            for peak in tmp_distribution:
-                tmp_mz.append(np.round(peak.mz, 4))
-                tmp_int.append(peak.intensity * 100 * np.power(prob, sum(losted)))
-                # all_mz.append([np.round(peak.mz,4), peak.intensity])
-            all_mz.append([tmp_mz, np.round(tmp_int, 4)])
-            lost_comp.append(losted)
-            Z_list.append(-j)
+            if is_HNa:
+                max_H = y[0]+y[1]+y[4] # 糖醛酸数目加硫酸根数目
+                for n in range(-j, max_H+1):
+                    diff_mass = 0
+                    n_na = n+j # Na的数目是H的数目减电荷数
+                    diff_mass = n_na *(dict_atom['Na']-1) # 计算与只脱H的mass的差距
+                    diff_mass = diff_mass/np.abs(j)
+                    tmp_mz = []
+                    tmp_int = []
+                    for peak in tmp_distribution:
+                        tmp_mz.append(np.round(peak.mz+diff_mass, 4))
+                        tmp_int.append(peak.intensity * 100 * np.power(prob, sum(losted)))
+                        # all_mz.append([np.round(peak.mz,4), peak.intensity])
+                    H_Na_count.append([n,n_na])
+                    all_mz.append([tmp_mz, np.round(tmp_int, 4)])
+                    lost_comp.append(losted)
+                    Z_list.append(-j)
+            else:
+                for peak in tmp_distribution:
+                    tmp_mz.append(np.round(peak.mz, 4))
+                    tmp_int.append(peak.intensity * 100 * np.power(prob, sum(losted)))
+                    # all_mz.append([np.round(peak.mz,4), peak.intensity])
+                all_mz.append([tmp_mz, np.round(tmp_int, 4)])
+                lost_comp.append(losted)
+                H_Na_count.append([-j, 0])
+                Z_list.append(-j)
     # sorted_mz = sorted(all_mz, key=lambda mz: mz[0])
-    return all_mz, lost_comp, Z_list
+    return all_mz, lost_comp, Z_list, H_Na_count
 
 
 def get_exp_isp(dict_list, max_int):  ## 提取实验谱中的所有同位素峰
@@ -548,7 +727,7 @@ def get_exp_isp(dict_list, max_int):  ## 提取实验谱中的所有同位素峰
         for x in dict_isp.keys():
             tmp_mz = dict_isp[x][0]
             tmp_int = []
-            for j in range(5):
+            for j in range(len(dict_isp[x][1])):
                 tmp_int.append(dict_isp[x][1][j] / max_int * 100)
             exp_isp.append([tmp_mz, np.round(tmp_int, 4)])
     return exp_isp
@@ -586,7 +765,8 @@ def get_one_mass_comp(mass, z, ppm, the_HP):
     result = []
     for m in atom_list.keys():
         one_atom = atom_list[m][0]
-        all_list, lost_record = generate_new_composition([one_atom], 5)
+        # all_list, lost_record = generate_new_composition([one_atom], 5)
+        all_list, lost_record = [one_atom], [[0, 0, 0, 0]]
         for i in range(len(all_list)):
             x = all_list[i]
             losted = lost_record[i]
@@ -610,47 +790,57 @@ def get_JS(v1, v2, w1=0.5, w2=0.5):
     return JS
 
 
-def cal_all_the_sp(all_atom_list, prob):
+def cal_all_the_sp(all_atom_list, all_comp_list, prob,max_ion=5,is_HNa=False):
     all_the = []
     all_lost = []
     all_z = []
     all_the_01 = []
-    for one_atom in all_atom_list:
-        the_isp, lost_comp, Z_list = generate_theory_SP(one_atom, prob)
-        the_isp, lost_comp, Z_list = sort_the(the_isp, lost_comp, Z_list)
+    all_HNa = []
+    for i in range(len(all_atom_list)):
+        one_atom = all_atom_list[i]
+        one_comp = all_comp_list[i]
+        the_isp, lost_comp, Z_list, H_Na_list = generate_theory_SP(one_atom,one_comp, prob, max_ion, is_HNa=is_HNa)
+        the_isp, lost_comp, Z_list, H_Na_list = sort_the(the_isp, lost_comp, Z_list, H_Na_list)
         min_id = 0
         for i in range(len(the_isp)):
             x = the_isp[i][0][0]
-            if x >= 350:
+            if x >= 100:
                 min_id = i
                 break
         the_isp = the_isp[min_id:]
         lost_comp = lost_comp[min_id:]
         Z_list = Z_list[min_id:]
+        H_Na_list = H_Na_list[min_id:]
         all_the.append(np.float32(the_isp))
         # all_the.append(the_isp)
         all_lost.append(lost_comp)
         all_z.append(Z_list)
         one_01 = change_the_format(the_isp)
         all_the_01.append(one_01)
-    result = [all_the, all_lost, all_z, all_the_01]
+        all_HNa.append(H_Na_list)
+    result = [all_the, all_lost, all_z, all_the_01, all_HNa]
     return result
 
 
-def get_the_sp(dir, all_atom_list, prob):
+def get_the_sp(dir, all_atom_list,all_comp_list, prob, max_ion, is_HNa=False):
+    dir = dir + str(max_ion)
+    if is_HNa:
+        dir+='HNa.pk'
+    else:
+        dir+='.pk'
     if os.path.exists(dir):
         with open(dir, 'rb') as f:
             data = pk.load(f)
         return data
     else:
-        data = cal_all_the_sp(all_atom_list, prob)
+        data = cal_all_the_sp(all_atom_list, all_comp_list, prob, max_ion=max_ion, is_HNa=is_HNa)
         save_pk(data, dir)
         return data
 
 
 def change_the_format(sp, win=0.1):
     index_t = []
-    min_th = 350 * np.int(1 / win)
+    min_th = 100 * np.int(1 / win)
     max_th = 1200 * np.int(1 / win)
     for one_isp in sp:
         for i in range(len(one_isp[0])):
@@ -664,14 +854,14 @@ def change_the_format(sp, win=0.1):
 
 
 def transform_the_01(sp, win=0.1):
-    result = np.zeros([850 * np.int(1 / win)], dtype=bool)
+    result = np.zeros([1100 * np.int(1 / win)], dtype=bool)
     result[sp] = True
     return result
 
 
 def change_sp_format(sp, win=0.05):
-    result = np.zeros([850 * np.int(1 / win)], dtype=bool)
-    min_th = 350 * np.int(1 / win)
+    result = np.zeros([1100 * np.int(1 / win)], dtype=bool)
+    min_th = 100 * np.int(1 / win)
     max_th = 1200 * np.int(1 / win)
     for one_isp in sp:
         for i in range(len(one_isp[0])):
@@ -743,10 +933,11 @@ def sort_exp(exp_isp):
     return exp_isp_copy
 
 
-def sort_the(the_isp, the_lost_list, the_z_list):
+def sort_the(the_isp, the_lost_list, the_z_list, the_H_Na):
     the_isp_copy = the_isp.copy()
     the_lost_list_copy = the_lost_list.copy()
     the_z_list_copy = the_z_list.copy()
+    the_H_Na_copy = the_H_Na.copy()
     for i in range(len(the_isp_copy)):
         j = i + 1
         min_i = i
@@ -760,18 +951,21 @@ def sort_the(the_isp, the_lost_list, the_z_list):
         temp_the = the_isp_copy[min_i]
         temp_lost = the_lost_list_copy[min_i]
         temp_z = the_z_list_copy[min_i]
+        temp_hna = the_H_Na_copy[min_i]
 
         the_isp_copy[min_i] = the_isp_copy[i]
         the_lost_list_copy[min_i] = the_lost_list_copy[i]
         the_z_list_copy[min_i] = the_z_list_copy[i]
+        the_H_Na_copy[min_i] = the_H_Na_copy[i]
 
         the_isp_copy[i] = temp_the
         the_lost_list_copy[i] = temp_lost
         the_z_list_copy[i] = temp_z
-    return the_isp_copy, the_lost_list_copy, the_z_list_copy
+        the_H_Na_copy[i] = temp_hna
+    return the_isp_copy, the_lost_list_copy, the_z_list_copy, the_H_Na_copy
 
 
-def match_isotopic(exp_isp, the_isp, ppm, thresh, min_match_num, the_lost_list, the_z_list, p=0.9):
+def match_isotopic(exp_isp, the_isp, ppm, thresh, min_match_num, the_lost_list, the_z_list, the_HNa_list, p=0.9):
     '''
     input:
     exp_isp: 实验谱，形式是同位素峰簇的集合，每个同位素峰簇包含五个峰的m/z值，以及对应的int值。三重list，
@@ -915,15 +1109,18 @@ def match_isotopic(exp_isp, the_isp, ppm, thresh, min_match_num, the_lost_list, 
         ret_the_isp_list = []
         ret_the_lost_list = []
         ret_the_z_list = []
+        ret_the_HNa_list = []
         for i in index_the:
             ret_the_isp_list.append(the_isp[i])
             ret_the_lost_list.append(the_lost_list[i])
             ret_the_z_list.append(the_z_list[i])
+            ret_the_HNa_list.append(the_HNa_list[i])
         score_mass = []  # 标记 得分的单同位素峰
         for i in range(len(matched_isp_list)):
             mass = matched_isp_list[i][0]
             score_mass.append(mass)
-        return global_score, matched_isp_list, ret_the_isp_list, matched_score_list, score_mass, ret_the_lost_list, ret_the_z_list
+        return global_score, matched_isp_list, ret_the_isp_list, matched_score_list, score_mass, ret_the_lost_list, \
+               ret_the_z_list, ret_the_HNa_list
 
     # 有重复的话
     index = []
@@ -1100,17 +1297,19 @@ def match_isotopic(exp_isp, the_isp, ppm, thresh, min_match_num, the_lost_list, 
     ret_the_isp_list = []
     ret_the_lost_list = []
     ret_the_z_list = []
+    ret_the_HNa_list = []
     for i in index_the:
         ret_the_isp_list.append(the_isp[i])
         ret_the_lost_list.append(the_lost_list[i])
         ret_the_z_list.append(the_z_list[i])
-
+        ret_the_HNa_list.append(the_HNa_list[i])
     score_mass = []  # 标记 得分的单同位素峰
     for i in range(len(matched_isp_list)):
         mass = matched_isp_list[i][0]
         score_mass.append(mass)
 
-    return global_score, matched_isp_list, ret_the_isp_list, matched_score_list, score_mass, ret_the_lost_list, ret_the_z_list
+    return global_score, matched_isp_list, ret_the_isp_list, matched_score_list, score_mass, ret_the_lost_list, \
+           ret_the_z_list, ret_the_HNa_list
 
 
 def calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, ppm=10, thresh=0, min_match_num=3, prob=0.5):
@@ -1124,6 +1323,7 @@ def calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, ppm=10, thre
     all_comp_match = []
     all_comp_lost = []
     all_comp_z = []
+    all_comp_HNa = []
     dict_match_exp = {}
     dict_theo_list = []
     all_score_list = []
@@ -1143,14 +1343,15 @@ def calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, ppm=10, thre
         the_isp = the_spectra[0][i]
         lost_comp = the_spectra[1][i]
         Z_list = the_spectra[2][i]
+        HNa_list = the_spectra[4][i]
         the_isp_01 = transform_the_01(the_spectra[3][i])
         com_score = compared_score(exp_isp_01, the_isp_01)
-        if com_score < 1:
+        if com_score <= 0:
             # print(com_score)
             pass_count += 1
             continue
-        score, match_list, match_theo_list, score_list, score_mass, match_lost_list, match_z_list \
-            = match_isotopic(exp_isp, the_isp, ppm, thresh, min_match_num, lost_comp, Z_list, prob)
+        score, match_list, match_theo_list, score_list, score_mass, match_lost_list, match_z_list, match_HNa_list, \
+            = match_isotopic(exp_isp, the_isp, ppm, thresh, min_match_num, lost_comp, Z_list,HNa_list, prob)
         if score > 0:
             dict_match_theo = {}
             for i in range(len(match_list)):
@@ -1171,6 +1372,7 @@ def calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, ppm=10, thre
             all_score_mass.append(score_mass)
             all_comp_lost.append(match_lost_list)
             all_comp_z.append(match_z_list)
+            all_comp_HNa.append(match_HNa_list)
         #     print(count, one_comp, x, score)
         #     print(len(dict_theo_list))
         # if count % 100 == 0:
@@ -1180,7 +1382,7 @@ def calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, ppm=10, thre
     # print("ID\t" + str(count + pass_count) + "\t")
     print('ma1', time() - ttt)
     return all_comp, all_atom, all_comp_mass, all_comp_score, dict_match_exp, \
-           dict_theo_list, all_score_list, all_score_mass, all_comp_lost, all_comp_z
+           dict_theo_list, all_score_list, all_score_mass, all_comp_lost, all_comp_z, all_comp_HNa
 
 
 def transform_data(dict_exp_match, dict_theo_list, all_comp_score, candidate_sort_index):
@@ -1224,41 +1426,41 @@ def lasso_reg(feature, label, alpha=0.1):
     return w, r2_score_lasso
 
 
-def get_label(match_list):
-    all_comp = match_list[0]
-    all_comp_mass = match_list[2]
-    # all_comp_score = match_list[3]
-    all_score_list = match_list[6]
-    all_score_mass = match_list[7]
-    all_comp_lost = match_list[8]
-    all_comp_z = match_list[9]
-
-    ## key:理论中性质量，value: 理论结构分子组成
-    dict_mass_comp = {}
-    ## key:理论中性质量，value: flag 数组， flag[0]: 实验谱匹配m/z,OR 理论中性mass-1, flag[1]: 电荷数，OR 0
-    dict_mass_flag = {}
-    ## key:理论中性质量，value: 衍生 label 数组 index
-    dict_mass_family = {}
-
-    label = []
-    for i in range(len(all_comp)):
-        tmp_mass = all_comp_mass[i]
-        flag = [tmp_mass - 1, 0]
-        dict_mass_comp[tmp_mass] = all_comp[i]
-        index_list = []
-        for j in range(len(all_score_list[i])):
-            tmp_mz = all_score_mass[i][j][0]
-            tmp_z = all_comp_z[i][j]
-            tmp_comp = all_comp[i]
-            tmp_lost = all_comp_lost[i][j]
-            if np.sum(tmp_lost) == 0:
-                flag = [tmp_mz, tmp_z]
-            tmp_score = all_score_list[i][j]
-            label.append([tmp_mz, tmp_z, tmp_comp, tmp_lost, tmp_score])
-            index_list.append(len(label) - 1)
-        dict_mass_family[tmp_mass] = index_list
-        dict_mass_flag[tmp_mass] = flag
-    return label, dict_mass_comp, dict_mass_flag, dict_mass_family
+# def get_label(match_list):
+#     all_comp = match_list[0]
+#     all_comp_mass = match_list[2]
+#     # all_comp_score = match_list[3]
+#     all_score_list = match_list[6]
+#     all_score_mass = match_list[7]
+#     all_comp_lost = match_list[8]
+#     all_comp_z = match_list[9]
+#
+#     ## key:理论中性质量，value: 理论结构分子组成
+#     dict_mass_comp = {}
+#     ## key:理论中性质量，value: flag 数组， flag[0]: 实验谱匹配m/z,OR 理论中性mass-1, flag[1]: 电荷数，OR 0
+#     dict_mass_flag = {}
+#     ## key:理论中性质量，value: 衍生 label 数组 index
+#     dict_mass_family = {}
+#
+#     label = []
+#     for i in range(len(all_comp)):
+#         tmp_mass = all_comp_mass[i]
+#         flag = [tmp_mass - 1, 0]
+#         dict_mass_comp[tmp_mass] = all_comp[i]
+#         index_list = []
+#         for j in range(len(all_score_list[i])):
+#             tmp_mz = all_score_mass[i][j][0]
+#             tmp_z = all_comp_z[i][j]
+#             tmp_comp = all_comp[i]
+#             tmp_lost = all_comp_lost[i][j]
+#             if np.sum(tmp_lost) == 0:
+#                 flag = [tmp_mz, tmp_z]
+#             tmp_score = all_score_list[i][j]
+#             label.append([tmp_mz, tmp_z, tmp_comp, tmp_lost, tmp_score])
+#             index_list.append(len(label) - 1)
+#         dict_mass_family[tmp_mass] = index_list
+#         dict_mass_flag[tmp_mass] = flag
+#     return label, dict_mass_comp, dict_mass_flag, dict_mass_family
 
 
 def get_high_peak(all_mass_list, dict_match_exp):
@@ -1279,12 +1481,12 @@ def get_high_peak(all_mass_list, dict_match_exp):
 
 
 def get_n_label(match_list, total_int, candidate_sort_index, n):
-    comp = np.array(match_list[0:4] + match_list[5:10]).T
+    comp = np.array(match_list[0:4] + match_list[5:11]).T
     sorted_comp = sorted(comp, key=lambda x: x[3], reverse=True)
     dict_exp_match = match_list[4]
     ## key:理论中性质量，value: 理论结构分子组成
     dict_mass_comp = {}
-    ## key:理论中性质量，value: flag 数组， flag[0]: 实验谱匹配m/z,OR 理论中性mass-1, flag[1]: 电荷数，OR 0
+    ## key:理论中性质量，value: flag 数组， flag[0]: 实验谱匹配m/z,OR 理论中性mass-1, flag[1]: 电荷数，OR 0, flag[2] 脱H加Na
     dict_mass_flag = {}
     ## key:理论中性质量，value: 衍生 label 数组 index
     dict_mass_family = {}
@@ -1299,15 +1501,15 @@ def get_n_label(match_list, total_int, candidate_sort_index, n):
     if n < 0 or n > len(candidate_sort_index):
         print('invalid candidate number!')
         return label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order
-    score_coff = match_int/total_int
+    score_coff = match_int / total_int
     dict_has_labeled = {}
     max_score = sorted_comp[0][3]
     for i in range(n):
         id = candidate_sort_index[i]
         key_id = id * 10000
         tmp_mass = sorted_comp[id][2]
-        tmp_score = np.round(sorted_comp[id][3] * score_coff/max_score, 4)
-        flag = [tmp_mass - 1, 0, []]
+        tmp_score = np.round(sorted_comp[id][3] * score_coff / max_score, 4)
+        flag = [tmp_mass - 1, 0,[], [], 0]
         new_key = np.round(key_id + tmp_mass, 5)
         dict_mass_comp[new_key] = sorted_comp[id][0]
         key_with_order.append(new_key)
@@ -1324,8 +1526,9 @@ def get_n_label(match_list, total_int, candidate_sort_index, n):
             idx = np.int(sort_mass[k][2])
             if mz not in dict_has_labeled.keys():
                 z = sorted_comp[id][8][idx]
+                HNa = sorted_comp[id][9][idx]
                 lost = sorted_comp[id][7][idx]
-                flag = [mz, z, lost, tmp_score]
+                flag = [mz, z, HNa, lost, tmp_score]
                 is_labeled = True
                 dict_has_labeled[mz] = 1
                 break
@@ -1335,12 +1538,14 @@ def get_n_label(match_list, total_int, candidate_sort_index, n):
             mz = sort_mass[0][0]
             idx = np.int(sort_mass[0][2])
             z = sorted_comp[id][8][idx]
+            HNa = sorted_comp[id][9][idx]
             lost = sorted_comp[id][7][idx]
-            flag = [mz, z, lost, tmp_score]
+            flag = [mz, z, HNa, lost, tmp_score]
         for j in range(len(max_mass)):
             # tmp_mz = max_mass[j]
             tmp_mz = all_score_mass[j][0]
             order_peak = 1
+            ## 这里准备将结构标在得分最高的同位素峰上，但发现有些问题，待解决
             for i in (range(len(all_score_mass[j]))):
                 mass = all_score_mass[j][i]
                 if dict_exp_match[mass] > 0:
@@ -1349,9 +1554,10 @@ def get_n_label(match_list, total_int, candidate_sort_index, n):
                     break
             tmp_score_p = np.round(all_score_list[j], 4)
             tmp_z = sorted_comp[id][8][j]
+            tmp_HNa = sorted_comp[id][9][j]
             tmp_comp = sorted_comp[id][0]
             tmp_lost = sorted_comp[id][7][j]
-            label.append([tmp_mz, tmp_z, tmp_comp, tmp_lost, tmp_score, order_peak])
+            label.append([tmp_mz, tmp_z,tmp_HNa, tmp_comp, tmp_lost, tmp_score, order_peak])
             index_list.append(len(label) - 1)
         dict_mass_family[new_key] = index_list
         dict_mass_flag[new_key] = flag
@@ -1575,12 +1781,14 @@ def get_accumlate_score(match_list):
     result_score.append(r3)
     return result_score
 
-def get_total_intensity(filter_mz,max_int):
+
+def get_total_intensity(filter_mz, max_int):
     total_int = 0
     for peak in filter_mz:
-        total_int+=peak[1]
-    total_int = np.round(total_int/max_int*100,4)
+        total_int += peak[1]
+    total_int = np.round(total_int / max_int * 100, 4)
     return total_int
+
 
 '''
 example:
@@ -1720,28 +1928,32 @@ def data_process(filter_MZ, max_int, fit_list, the_HP, cand_num=0, ppm=20, bound
 """
 
 
-def get_filter_MZ(origin_MZ, max_int, fit_list, the_HP, ppm=20, bound_th=0.001, bound_intensity=300):
+
+
+def get_filter_MZ(origin_MZ, max_int, fit_list, the_HP, the_sp_path, max_ion =7, ppm=20, bound_th=0.001, bound_intensity=0, is_HNa=False):
     from preprocess import pre_process_data
     # 因为2个文件相互引用了，所以在这里import
 
     s = time()
     top_n = 5
     isp_thresh = 0.5
-    the_SP_path = 'data/the_sp_0.1.pk'
+    the_SP_path = the_sp_path
     t0 = time()
     print('read:', t0 - s)
     filter_MZ, max_int = pre_process_data(origin_MZ, max_int, fit_list, ppm, bound_th,
                                           bound_intensity)
-    total_int = get_total_intensity(filter_MZ,max_int)
+    total_int = get_total_intensity(filter_MZ, max_int)
     # save_file(filter_MZ, 'data/filter_MZ')
     t1 = time()
     print('preprocess', t1 - t0)
-    dict_change_start_list, isotopic_list, dict_list = get_isotopic(filter_MZ, fit_list, ppm, 5, 5, isp_thresh)
+    dict_score_list, dict_list, dict_the_iso_list = get_isotopic(filter_MZ, fit_list, ppm, max_ion, 5, isp_thresh)
+    tmp_save = [dict_list, dict_the_iso_list]
+    save_pk(tmp_save,'./data/isotopic_draw.pk')
+
     t2 = time()
     print('find isotopic:', t2 - t1)
 
-    the_spectra = get_the_sp(the_SP_path, the_HP[3], 1)
-    t7 = time()
+    the_spectra = get_the_sp(the_SP_path, the_HP[3],the_HP[2], 1, max_ion, is_HNa=is_HNa)
     t7 = time()
     print('generate the sp:', t7 - t2)
     dict_list, delta = align_peak(dict_list, the_HP, the_spectra, top_n, ppm)
@@ -1757,12 +1969,12 @@ def data_process(exp_isp, max_int, total_int, the_spectra, dict_list, the_HP, pp
     prob = 0.95
     result_path = 'result/'
     all_comp, all_atom, all_comp_mass, all_comp_score, dict_exp_match, \
-    dict_theo_list, all_score_list, all_score_mass, all_comp_lost, all_comp_z = \
+    dict_theo_list, all_score_list, all_score_mass, all_comp_lost, all_comp_z, all_comp_HNa = \
         calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, ppm, prob=prob)
     t3 = time()
     # print('match time:', t3 - t7)
     match_result = [all_comp, all_atom, all_comp_mass, all_comp_score, dict_exp_match, dict_theo_list, all_score_list,
-                    all_score_mass, all_comp_lost, all_comp_z]
+                    all_score_mass, all_comp_lost, all_comp_z, all_comp_HNa]
     save_pk(match_result, result_path + 'one_match_result0.5.pk')
     result2_score, candidate_sort_index = get_most_power_candidate_score(match_result)
     t4 = time()
@@ -1806,8 +2018,8 @@ if __name__ == '__main__':
     prob = 0.95
     isp_thresh = 0.8
     bound_th = 0.001
-    bound_intensity = 300
-    the_HP = get_comp_pk('data/HP_20.pk')  # 枚举的理论肝素结构
+    bound_intensity = 0
+    the_HP = get_comp_pk('data/delta',6)  # 枚举的理论肝素结构
     filter_MZ_path = "data/filter_MZ.mgf"
     spectra_path = "data/938.mgf"
     # candidate_path = "data/HP_20_mass.csv"
@@ -1821,16 +2033,16 @@ if __name__ == '__main__':
     # filter_MZ, max_int = get_filter_MZ_pk(filter_MZ_path, spectra_path, the_HP[-1], ppm)
     t1 = time()
     print('preprocess', t1 - t0)
-    dict_change_start_list, isotopic_list, dict_list = get_isotopic(filter_MZ, fit_list, ppm, 5, 5,
+    dict_score_list, dict_list, dict_the_iso_list = get_isotopic(filter_MZ, fit_list, ppm, 7, 5,
                                                                     isp_thresh)  # 寻找同位素峰，并返回记录不同价态的字典列表
     t2 = time()
     print('find isotopic:', t2 - t1)
-    the_spectra = get_the_sp(the_SP_path, the_HP[3], 1)
+    the_spectra = get_the_sp(the_SP_path, the_HP[3],the_HP[2], 1,max_ion=7,is_HNa=is_HNa)
     t7 = time()
     print('generate the sp:', t7 - t2)
     dict_list, delta = align_peak(dict_list, the_HP, the_spectra, top_n, ppm)
     all_comp, all_atom, all_comp_mass, all_comp_score, dict_exp_match, \
-    dict_theo_list, all_score_list, all_score_mass, all_comp_lost, all_comp_z = \
+    dict_theo_list, all_score_list, all_score_mass, all_comp_lost, all_comp_z, all_comp_HNa = \
         calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, ppm, prob=prob)
     t3 = time()
     print('match time:', t3 - t7)

@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def get_top_n_isptopic(isptopic_list, n):
-    top_n = []  # m/z int z
+    top_n = [] # m/z int z
     top_n_isp = []
     for i in range(len(isptopic_list)):
         z = i + 1
@@ -42,9 +42,9 @@ def get_top_n_isptopic(isptopic_list, n):
 
 
 def change_sp_format1(sp, win=0.1):
-    result = np.zeros([850 * np.int(1 / win)], dtype=bool)
-    min_th = 350 * np.int(1 / win)
-    max_th = 1200 * np.int(1 / win)
+    result = np.zeros([1100*np.int(1/win)], dtype=bool)
+    min_th = 100*np.int(1/win)
+    max_th = 1200*np.int(1/win)
     for one_isp in sp:
         for i in range(len(one_isp[0])):
             mz = one_isp[0][i]
@@ -65,9 +65,9 @@ def compared_score1(a, b):
     return x
 
 
-def transform_the_011(sp, win=0.1):
-    result = np.zeros([850 * np.int(1 / win)], dtype=bool)
-    result[sp] = True
+def transform_the_011(sp,win=0.1):
+    result = np.zeros([1100 * np.int(1 / win)], dtype=bool)
+    result[sp]=True
     return result
 
 
@@ -88,9 +88,8 @@ def sort_exp1(exp_isp):
         exp_isp_copy[i] = temp
     return exp_isp_copy
 
-
-def match_align(exp_isp, the_isp, ppm=10, standard_mz=1000):
-    diff_top_n = np.ones([len(exp_isp)])
+def match_align(exp_isp, the_isp, ppm=10, standard_mz = 1000):
+    diff_top_n=np.ones([len(exp_isp)])
     MAX_L = 0
     for item in exp_isp:
         temp = item[0][-1] - item[0][0]
@@ -239,6 +238,6 @@ def align_peak(isptopic_list, the_HP, the_spectra, n, ppm):
     print(top_n)
     delta = match_top_n(top_n_isp, the_HP, the_spectra, ppm, top_n, max_int)
     # delta = 0
-    new_isp = get_aligned_isp(isptopic_list, delta)
-    print(delta)
-    return new_isp, delta
+    new_isp = get_aligned_isp(isptopic_list,delta)
+    print("best delta",delta)
+    return new_isp,delta

@@ -16,6 +16,7 @@ from draw_3D import *
 from qss import *
 
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import platform
@@ -129,12 +130,15 @@ class MainWindow(QMainWindow):
         self.figFlag = [0]  # tic：1  labels:2  famliy:3
         self.total_comp = 5157
         self.ppm = 20
+        self.str_num = 1000
+        self.max_ion = 10
         self.bound_th = 0.001
         self.bound_intensity = 300
         self.x_space = 12
         self.y_space = 20
         self.anno_text_size = 14
         self.opacity = [False, False, False, False]
+        self.is_HNa = True
         self.scan_com_button = {}
         self.chk_list = []
         self.lose_ion = ["HSO_3", 'NH_2', 'NH_{2}SO_3', 'COOH']
@@ -146,11 +150,14 @@ class MainWindow(QMainWindow):
 
     def _init_data(self):
         s = time.time()
+        dp= 4
         self.DATA0 = 'data/plot0_005_tic.pk'
 
         self.data_3d_file_name = 'data/plot0_005_smooth_tic.pk'
-        self.fit_list = get_fit_pk('data/Isotope_dist_fit.pk')
-        self.the_HP = get_comp_pk('data/HP_20.pk')  # 枚举的理论肝素结构
+        self.fit_list = get_fit_pk('data/Isotope_dist_fit')
+        self.the_HP = get_comp_pk('data/enox_',dp)  # 枚举的理论肝素结构
+        self.the_SP_path = 'data/enox_'+str(dp)+'_sp_0.1_noloss_'
+        self.str_num = len(self.the_HP[2])
         self.peak_dict = {}  # 保存实验谱mz->absolute intensity
 
         # 用于保存excel
@@ -633,9 +640,12 @@ class MainWindow(QMainWindow):
             max_int=self.maxIntensity,
             fit_list=self.fit_list,
             the_HP=self.the_HP,
+            the_sp_path = self.the_SP_path,
+            max_ion=self.max_ion,
             ppm=self.ppm,
             bound_th=self.bound_th,
-            bound_intensity=self.bound_intensity)
+            bound_intensity=self.bound_intensity,
+            is_HNa=self.is_HNa)
         for peak in self.peaks:
             self.peak_dict[peak[0]] = peak[1]
         self.origin_xs, self.origin_ys = format_peaks(self.peaks)
@@ -750,8 +760,8 @@ class MainWindow(QMainWindow):
             a_list = []
 
             for j in range(len(label_list)):
-                if label_list[j][4] != 1:
-                    self.orgAx.annotate(s="+" + str(label_list[j][4] - 1), xy=key,
+                if label_list[j][5] != 1:
+                    self.orgAx.annotate(s="+" + str(label_list[j][5] - 1), xy=key,
                                         xytext=(-self.x_space, +(10 + self.y_space * j + self.y_space * 0.5)),
                                         textcoords='offset pixels',
                                         color='black', ha='center', va='bottom',
@@ -820,7 +830,7 @@ class MainWindow(QMainWindow):
         else:
             self._fig.clear()
             ax2 = self._fig.add_subplot(1, 1, 1)
-            rowLabel = ['质荷比', '电荷', '第几个同位素峰', '分子组成', '脱落基团']
+            rowLabel = ['质荷比', '电荷', '脱氢','加钠', '第几个同位素峰', '分子组成', '脱落基团']
 
             table = ax2.table(cellText=self.labels[0:20], colLabels=rowLabel, rowLoc='center',
                               loc='center', cellLoc='center', fontsize=60, edges='open')
@@ -896,7 +906,7 @@ class MainWindow(QMainWindow):
 
         # 标注出衍生峰和基团损失
 
-        mz_list, inten_list, comp_list, lose_list, z_list, score_list = self.mass_family[self.key_with_order[index]]
+        mz_list, inten_list, comp_list, lose_list, z_list, hna_list, score_list = self.mass_family[self.key_with_order[index]]
         xs, ys = format_peaks_2_dim(mzs=mz_list, intens=inten_list)
         self.ax1.plot(xs, ys, linewidth=1, c='blue', label=self.right_struct[index][0])
 
@@ -936,6 +946,19 @@ class MainWindow(QMainWindow):
         # 4.衍生峰里的
         self.mass_family = get_family(self.label_info, self.peak_dict)
 
+        # 5.用于表格下载
+        self.df = pd.DataFrame({
+            '质荷比': self.label_message[0],
+            '电荷': self.label_message[1],
+            '脱H': self.label_message[2][:,0],
+            '加Na':self.label_message[2][:,1],
+            '理论质荷比': self.label_message[3],
+            '相对分子量': self.label_message[7],
+            '第几个同位素峰': self.label_message[4],
+            '分子组成': self.label_message[5],
+            '脱落基团': self.label_message[6]
+        })
+
         # 颜色生成器
         colors = mpl.cm.get_cmap("YlOrRd")  # 'viridis', 'inferno', 'plasma', 'magma'
         digit = list(map(str, range(10))) + list("ABCDEF")
@@ -965,9 +988,9 @@ class MainWindow(QMainWindow):
 
     def updateDataProcessBar(self, ID):
         QApplication.processEvents()  # 实时刷新界面
-        self.dataDlgProcess.setValue(int(ID * 100.0 / self.total_comp))
+        self.dataDlgProcess.setValue(int(ID * 100.0 / self.str_num))
         QApplication.processEvents()  # 实时刷新界面
-        self.dataDlgProcess.setLabelText("已完成 " + str(ID) + "/" + str(self.total_comp) + "       ")
+        self.dataDlgProcess.setLabelText("已完成 " + str(ID) + "/" + str(self.str_num) + "       ")
         QApplication.processEvents()  # 实时刷新界面
 
     def update_prpcess_step_bar(self, step):
@@ -1117,31 +1140,32 @@ class MainWindow(QMainWindow):
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
-            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载组成", 'data/formula.xls',
-                                                                "*.xls;;All Files(*)")
+            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载组成", 'data/formula.xlsx',
+                                                                "*.xlsx;;All Files(*)")
             if selectedDir != '':
-                self.save_xls(selectedDir)
+                # self.save_xls(selectedDir)
+                self.df.to_excel(selectedDir, index=False)
 
-    def save_xls(self, path):
-        self.ws.write(0, 0, '质荷比')
-        self.ws.write(0, 1, '电荷')
-        self.ws.write(0, 2, '第几个同位素峰')
-        self.ws.write(0, 3, '分子组成')
-        self.ws.write(0, 4, '脱落基团')
-
-        i = 1
-        for key in self.xy:
-            label_list = self.mass_labels[key]
-            for j in range(len(label_list)):
-                self.ws.write(i, 0, str(key[0]))
-                self.ws.write(i, 1, str(label_list[j][2]))
-                self.ws.write(i, 2, str(label_list[j][4]))
-                self.ws.write(i, 3, str(label_list[j][0]))
-                self.ws.write(i, 4, str(label_list[j][1]))
-                i += 1
-
-        # 保存excel文件
-        self.wb.save(path)
+    # def save_xls(self, path):
+    #     self.ws.write(0, 0, '质荷比')
+    #     self.ws.write(0, 1, '电荷')
+    #     self.ws.write(0, 2, '第几个同位素峰')
+    #     self.ws.write(0, 3, '分子组成')
+    #     self.ws.write(0, 4, '脱落基团')
+    #
+    #     i = 1
+    #     for key in self.xy:
+    #         label_list = self.mass_labels[key]
+    #         for j in range(len(label_list)):
+    #             self.ws.write(i, 0, str(key[0]))
+    #             self.ws.write(i, 1, str(label_list[j][2]))
+    #             self.ws.write(i, 2, str(label_list[j][4]))
+    #             self.ws.write(i, 3, str(label_list[j][0]))
+    #             self.ws.write(i, 4, str(label_list[j][1]))
+    #             i += 1
+    #
+    #     # 保存excel文件
+    #     self.wb.save(path)
 
     def setOpacity(self):  # 这是设置菜单栏4个按钮的背景色
         self.showTICAction.setEnabled(self.opacity[0])
