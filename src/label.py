@@ -7,11 +7,11 @@ def get_n_label(match_list, total_int, candidate_sort_index, n):
     comp = np.array(match_list[0:4] + match_list[5:11]).T
     sorted_comp = sorted(comp, key=lambda x: x[3], reverse=True)
     dict_exp_match = match_list[4]
-    ## key:理论中性质量，value: 理论结构分子组成
+    # key:理论中性质量，value: 理论结构分子组成
     dict_mass_comp = {}
-    ## key:理论中性质量，value: flag 数组， flag[0]: 实验谱匹配m/z,OR 理论中性mass-1, flag[1]: 电荷数，OR 0, flag[2] 脱H加Na
+    # key:理论中性质量，value: flag 数组， flag[0]: 实验谱匹配m/z,OR 理论中性mass-1, flag[1]: 电荷数，OR 0, flag[2] 脱H加Na
     dict_mass_flag = {}
-    ## key:理论中性质量，value: 衍生 label 数组 index
+    # key:理论中性质量，value: 衍生 label 数组 index
     dict_mass_family = {}
     key_with_order = []
     label = []
@@ -68,7 +68,6 @@ def get_n_label(match_list, total_int, candidate_sort_index, n):
             # tmp_mz = max_mass[j]
             tmp_mz = all_score_mass[j][0]
             order_peak = 1
-            ## 这里准备将结构标在得分最高的同位素峰上，但发现有些问题，待解决
             for i in (range(len(all_score_mass[j]))):
                 mass = all_score_mass[j][i]
                 if dict_exp_match[mass] > 0:
@@ -193,13 +192,12 @@ def get_most_power_candidate_score(match_list):
 
 
 def get_accumlate_score(match_list):
-    '''
-
+    """
     :param match_list:   匹配返回的结果
     :return: result_score: 累计得分结果
     r1,r2,r3: 三种打分方式的累计得分列表
     s1,s2,s3: 三种打分方式的当前累计得分
-    '''
+    """
     result_score = []
     r1 = []
     r2 = []
