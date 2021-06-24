@@ -9,7 +9,9 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvas, NavigationToolbar2
 
 from candidate_dialog import QmyDialogSize, QAnalyseBar, pbar_str, DPstepBar
 from spectra_tools import *
-from Hp_opt import get_fit_pk, get_comp_pk, save_file, get_filter_MZ
+from Hp_opt import get_filter_MZ
+from src.utils import save_file
+from src.isotopic_detect import get_fit_pk, get_comp_pk
 from PIL import Image
 from mzML_parser import *
 from draw_3D import *

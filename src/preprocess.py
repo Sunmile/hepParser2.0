@@ -390,7 +390,7 @@ def align_peaks(peaks, max_int, candidates, ppm, delta):
     匹配的时候用exp_isp 最后移的时候移filter_MZ, 然后重新求exp_isp 再匹配
     返回是和peaks相同的格式
     """
-    fit_list = get_fit_pk('data/Isotope_dist_fit.pk')  # 4.寻找同位素峰，并返回记录不同价态的字典列表
+    fit_list = get_fit_pk('../data/Isotope_dist_fit.pk')  # 4.寻找同位素峰，并返回记录不同价态的字典列表
     # if delta is None:
     #     delta = align_grid_search(peaks, max_int, candidates, fit_list, window=0.1, steps=10, ppm=ppm)
     # for i in range(0, len(peaks)):
@@ -495,7 +495,7 @@ def get_filter_MZ_pk(filter_MZ_path, spectra_path, ppm=10, bound_th=0.001, bound
         filter_MZ, max_int = read_spectra(filter_MZ_path)
     else:
         filter_MZ, max_int = read_spectra(spectra_path)
-        fit_list = get_fit_pk('data/Isotope_dist_fit.pk')  # 1.寻找同位素峰，并返回记录不同价态的字典列表
+        fit_list = get_fit_pk('../data/Isotope_dist_fit.pk')  # 1.寻找同位素峰，并返回记录不同价态的字典列表
         t0 = time.time()
         filter_MZ, max_int = pre_process_data(filter_MZ, max_int, fit_list, ppm, bound_th,
                                               bound_intensity)
