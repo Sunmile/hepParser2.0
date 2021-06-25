@@ -1,0 +1,101 @@
+# Some important variables' structure
+1. the_spectra: the theoretical spectra of all components
+    len = 5
+    type = list
+    the_spectra[0]: the theoretical isotopic clusters of each component
+        len = the number of component
+        type = list
+        the_spectra[0][0]: the theoretical isotopic clusters of the first component
+            len = the number of the theoretical isotopic clusters
+            type = array
+            the_spectra[0][0][0]: the first isotopic clusters of the first component
+                len = 2
+                type = array
+                the_spectra[0][0][0][0]: the m/z list of isotopic cluster
+                    len = 5
+                    type = array
+                    the_spectra[0][0][0][0][0]: the first m/z of isotopic cluster
+                the_spectra[0][0][0][1]: the theoretical intensity list of isotopic cluster (sum to 1)
+                    len = 5
+                    type = array
+                    the_spectra[0][0][0][1][0]: the first intensity of isotopic cluster
+    the_spectra[1]: the lost list of each component
+        len = the number of component
+        type = list
+        the_spectra[1][0]: the lost list of the first component
+            len = the number of the theoretical isotopic clusters
+            type = list
+            the_spectra[1][0][0]: the first lost list of the first component
+                len = 4
+                type = list
+                the_spectra[1][0][0][0]: the first lost number of the first lost list
+    the_spectra[2]: the charge states of each isotopic list of all component
+        len = the number of component
+        type = list
+        the_spectra[2][0]: the charge states of each isotopic list of the first component
+            len = the number of the theoretical isotopic clusters
+            type = list
+            the_spectra[2][0][0]: the charge state of the first isotopic cluster
+    the_spectra[3]: the sites of each isotopic list of all component
+        len = the number of component
+        type = list
+        the_spectra[3][0]: the sites of each m/z of the first component
+            len = the number of the theoretical isotopic clusters *5
+            type = list
+            the_spectra[3][0][0]: the site of the first m/z of the first component
+    the_spectra[4]: the number of lost H and added Na of each isotopic list of all component
+        len = the number of component
+        type = list
+        the_spectra[4][0]: the number of lost H and added Na of each isotopic list of the first component
+            len = the number of the theoretical isotopic clusters
+            type = list
+            the_spectra[4][0][0]: the number of lost H and added Na of the first isotopic
+                len = 2
+                type = list
+                the_spectra[4][0][0][0]: the number of lost H
+                the_spectra[4][0][0][1]: the number of added Na
+
+2. the_HP: the components' information of one DP (corresponding to the_spectra)
+    len = 5
+    type = list
+    the_HP[0]: the mass and components of each structure
+        len = number of different mass for all components
+        type = dict
+        dict.key: the mass
+        dict.value: the Monosaccharide component of each structure
+            len = the number of candidate with the key mass. (usually 1 )
+            type = list
+            dict[mass][0]: the Monosaccharide component of first candidate
+                len = 7
+                type = list
+                example: [1,1,2,0,0,0,0]
+    the_HP[1]: the mass and composition of each structure
+        len = number of different mass for all components
+        type = dict
+        dict.key: the mass
+        dict.value: the atom composition of each structure
+            len = the number of candidate with the key mass. (usually 1 )
+            type = list
+            dict[mass][0]: the atom composition of the first candidate
+                len = 5
+                type = list
+                example: [38,24,2,20,0]
+    the_HP[2]: the component list
+        len = number of components
+        type = list
+        the_HP[2][0]: the Monosaccharide component of the first candidate
+            len = 7
+            type = list
+            example: [1,1,2,0,0,0,0]
+    the_HP[3]: the composition list
+        len = number of components
+        type = list
+        the_HP[3][0]: the atom composition of the first candidate
+            len = 5
+            type = list
+            example: [38,24,2,20,0]
+    the_HP[4]: the mass list
+        len = number of components
+        type = list
+        the_HP[4][0]: the mass of the first candidate
+

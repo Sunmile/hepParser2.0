@@ -47,7 +47,7 @@ def generate_new_composition(filter_list, max_lost_count=20):
 
 ## is_HNa: 是否以脱H加Na带负电
 ## 脱H上限为硫酸根数目加羧基数目
-def generate_theory_SP(atom, component, prob=0.5,max_ion=5, is_HNa=False):
+def generate_theory_SP(atom, component, prob=0.5, max_ion=5, is_HNa=False):
     # all_com, lost_record = generate_new_composition([atom], 2)
     all_atom, all_comp, lost_record = [atom],[component],[[0, 0, 0, 0]]
     # pl(all_com)
