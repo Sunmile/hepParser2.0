@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import copy
 import os
+import pickle as pk
 from src.utils import *
 from src.atom_mass import *
 
