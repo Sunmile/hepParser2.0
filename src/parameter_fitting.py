@@ -21,10 +21,9 @@ def get_site_dict(n_iso_list):
     return dict_pos_site,dict_site_pos
 
 
-def transform_sp(the_SP_path, the_HP, max_ion, is_HNa):
+def transform_sp(the_spectra):
     dict_mass_int = {}
     mass_list = []
-    the_spectra = get_the_sp(the_SP_path, the_HP[3], the_HP[2], 1, max_ion, is_HNa=is_HNa)
     the_iso = the_spectra[0]
     n_component = len(the_iso)
     n_iso_list = []
@@ -108,12 +107,12 @@ def generate_label(mass_list, exp_sp, max_int, ppm=20,scale=100):
 
 
 def lasso_fit(feature, label, alpha=1):
-    lasso = Lasso(alpha=alpha, positive=True, max_iter=5000)
+    lasso = Lasso(alpha=alpha, positive=True,tol=1E-6,random_state=0, max_iter=50000)
     lasso.fit(feature, label)
     y_pred = lasso.predict(feature)
     r2_score_lasso = r2_score(label, y_pred)
     w = lasso.coef_
-    print('R2 score:', r2_score_lasso)
+    # print('R2 score:', r2_score_lasso)
     # if alpha == 0.5:
     #     pd.DataFrame(w).to_csv('result/w_0.5.csv', header=None, index=None)
     # pl(w)
@@ -138,10 +137,13 @@ def get_fit_result(w, dict_site_pos):
 if __name__ == '__main__':
     exp_dir = './../data/F12_merge.csv'
     dp = 4
+    max_ion =10
+    is_HNa = True
     the_HP = get_comp_pk('./../data/enox_',dp)
     the_SP_path = './../data/enox_' + str(dp) + '_sp_0.1_noloss_'
+    the_spectra = get_the_sp(the_SP_path, the_HP[3], the_HP[2], 1, max_ion, is_HNa=is_HNa)
     dict_mass_int, mass_list, dict_pos_site, dict_site_pos = \
-        transform_sp(the_SP_path, the_HP, max_ion=10, is_HNa=True)
+        transform_sp(the_spectra)
     ori_fea = get_original_feature(mass_list,dict_mass_int)
     comb_fea,new_mass_list = get_combine_feature(mass_list,dict_mass_int)
     print('ori mass list len:',len(mass_list))
@@ -150,14 +152,34 @@ if __name__ == '__main__':
 
     exp_sp = np.array(exp_sp)
     max_int = max(exp_sp[:, 1])
-    label = generate_label(new_mass_list, exp_sp, max_int)
-    w, r2_score_lasso = lasso_fit(comb_fea,label, alpha=0.01)
+    label = generate_label(new_mass_list, exp_sp, max_int,ppm=50,scale=100)
+    w, r2_score_lasso = lasso_fit(comb_fea, label, alpha=0.0)
     dict_pos_w, dict_comp_w = get_fit_result(w, dict_site_pos)
     print('R2 score:', r2_score_lasso)
     for x in dict_comp_w.keys():
         comp = the_HP[2][x]
         tmp_w = dict_comp_w[x]
-        print(comp, tmp_w)
+        print(x, '\t', comp, '\t', np.round(tmp_w,5))
+    annotate = []
+    for i in range(len(new_mass_list)):
+        exp_int = label[i]
+        if exp_int>0:
+            mz = new_mass_list[i]
+            the_int = np.dot(comb_fea[i],w)
+            one_fea = np.array(comb_fea[i])*np.array(w)
+            sites = np.where(np.array(one_fea)>0)[0]
+            poss = []
+            HNas = []
+            for x in sites:
+                pos = dict_site_pos[x]
+                HNa = the_spectra[4][pos[0]][pos[1]]
+                poss.append(pos)
+                HNas.append(HNa)
+            annotate.append([mz, exp_int, the_int, poss, HNas])
+    annotate = pd.DataFrame(annotate, columns=['mz','exp_int','the_int','annotation', 'HNas'])
+    annotate.to_csv('./../data/annotate_0.csv', index=None)
+
+
 
 
 

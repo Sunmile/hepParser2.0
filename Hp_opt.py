@@ -22,7 +22,7 @@ def get_filter_MZ(origin_MZ, max_int, fit_list, the_HP, the_sp_path, max_ion=7, 
     print('preprocess', t1 - t0)
     dict_score_list, dict_list, dict_the_iso_list = get_isotopic(filter_MZ, fit_list, ppm, max_ion, 5, isp_thresh)
     tmp_save = [dict_list, dict_the_iso_list]
-    save_pk(tmp_save,'./data/isotopic_draw.pk')
+    # save_pk(tmp_save,'./data/isotopic_draw.pk')
 
     t2 = time()
     print('find isotopic:', t2 - t1)

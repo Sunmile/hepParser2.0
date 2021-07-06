@@ -233,9 +233,16 @@ def get_all_struct(label_info):
         comp = dict_mass_comp[mass]
 
         per_struct = ""
-        for ele in comp:
-            per_struct += str(ele) + ","
-        per_struct = "[" + per_struct[:-1] + "]"
+        # for ele in comp:
+        #     per_struct += str(ele) + ","
+        # per_struct = "[" + per_struct[:-1] + "]"
+        if comp[0] == 1:
+            per_struct += 'dA'
+        per_struct += '['+ str(comp[1])+','+str(comp[2])+','+str(comp[3])+','+str(comp[4]) + ']'
+        if comp[5] == 1:
+            per_struct += 'aG'
+        if comp[6] == 1:
+            per_struct += 'aM'
         right_comp.append([per_struct, '{:.2f}'.format(label[tmp_index[0]][5])])
 
     return right_comp, key_with_order
@@ -312,9 +319,16 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order):
         comp = dict_mass_comp[mass]
 
         per_struct = ""
-        for ele in comp:
-            per_struct += str(ele) + ","
-        per_struct = "[" + per_struct[:-1] + "]"
+        # for ele in comp:
+        #     per_struct += str(ele) + ","
+        if comp[0] == 1:
+            per_struct += 'dA'
+        per_struct += '['+ str(comp[1])+','+str(comp[2])+','+str(comp[3])+','+str(comp[4]) + ']'
+        if comp[5] == 1:
+            per_struct += 'aG'
+        if comp[6] == 1:
+            per_struct += 'aM'
+        # per_struct = "[" + per_struct[:-1] + "]"
         right_comp.append([per_struct, '{:.2f}'.format(label[tmp_index[0]][5]), num, key_id[mass]])
         struct_id[per_struct] = num
         for id in tmp_index:
@@ -335,26 +349,35 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order):
         mass_struct_tips[key] = "$m/z : " + str(key[0]) + "$ \n$intensity : " + str(key[1]) + "$\n" + struct_info
 
         # 转换label为5个list
-    mass_list, z_list, hna_list, the_mz_list, comp_list, the_mass_list, lose_list, score_list, th_list = \
-        [], [], [], [], [], [], [], [], []
+    mass_list, int_list, z_list, hna_list, the_mz_list, comp_list, the_mass_list, lose_list, score_list, th_list = \
+        [], [], [], [], [], [], [], [], [], []
 
     label_copy = copy.deepcopy(label)
     label_copy.sort(key=lambda x: x[0])
     for line in label_copy:
-        new_labels.append([line[0], line[1], line[2][0],line[2][1], line[6], line[3], line[4]])
+        per_struct = ""
+        if line[3][0] == 1:
+            per_struct += 'dA'
+        per_struct += '['+ str(line[3][1])+','+str(line[3][2])+','+str(line[3][3])+','+str(line[3][4]) + ']'
+        if line[3][5] == 1:
+            per_struct += 'aG'
+        if line[3][6] == 1:
+            per_struct += 'aM'
+        new_labels.append([line[0], line[1], line[2][0],line[2][1], line[6], per_struct, line[4]])
         mass_list.append(line[0])
+        int_list.append(peak_dict[line[0]])
         z_list.append(line[1])
         hna_list.append(line[2])
         tmp_mass,tmp_mz = get_theory_mz(line[1],line[2],line[3],line[4])
         the_mz_list.append(tmp_mz)
         the_mass_list.append(tmp_mass)
-        comp_list.append(line[3])
+        comp_list.append(per_struct)
         lose_list.append(line[4])
         # score_list.append(line[4])
         th_list.append(line[6])
     hna_list = np.array(hna_list)
     return xy, mass_label, mass_struct_tips, right_comp, struct_id, \
-           (mass_list, z_list,hna_list,the_mz_list, th_list, comp_list, lose_list, the_mass_list), new_labels
+           (mass_list,int_list, z_list,hna_list,the_mz_list, th_list, comp_list, lose_list, the_mass_list), new_labels
 
 
 # 寻找衍生峰的mz、inten
@@ -464,9 +487,16 @@ def format_struct_2(label_list, lose_ion):
         label = label_list[i]
         # for label in label_list:
         per_struct = ""
-        for ele in label[0]:
-            per_struct += str(ele) + ","
-        per_struct = "[" + per_struct[:-1] + "]"
+        # for ele in label[0]:
+        #     per_struct += str(ele) + ","
+        # per_struct = "[" + per_struct[:-1] + "]"
+        if label[0][0] == 1:
+            per_struct += 'dA'
+        per_struct += '['+ str(label[0][1])+','+str(label[0][2])+','+str(label[0][3])+','+str(label[0][4]) + ']'
+        if label[0][5] == 1:
+            per_struct += '^{aG}'
+        if label[0][6] == 1:
+            per_struct += '_{aM}'
         per_lost = ""
         for i in range(0, 4):
             # print(label[1])
@@ -476,7 +506,10 @@ def format_struct_2(label_list, lose_ion):
                 per_lost += "-" + lose_ion[i]
             else:
                 per_lost += "-" + str(label[1][i]) + lose_ion[i]
-        per_struct += per_lost + "^{" + str(label[2]) + "-}"
+        if per_lost=='' and label[0][5]==1:
+            per_struct = per_struct[:-1] +str(label[2])+"-}"
+        else:
+            per_struct += per_lost + "^{" + str(label[2]) + "-}"
         tmp_hna = label[3]
         per_struct += '-'+str(tmp_hna[0])+'H+'+str(tmp_hna[1])+'Na'
         structs.append(per_struct)
@@ -510,9 +543,21 @@ def format_loss(lose_list, lose_ion):
 
 def format_comp(comp_list, z):
     comp_info = ""
-    for i in range(len(comp_list)):
-        comp_info += str(comp_list[i]) + ","
-    return "$[" + comp_info[:-1] + "]^{" + str(z) + "-}$"
+    if comp_list[0] == 1:
+        comp_info += 'dA'
+    comp_info += '[' + str(comp_list[1]) + ',' + str(comp_list[2]) + ',' + str(comp_list[3]) + ',' + str(
+        comp_list[4]) + ']'
+    if comp_list[5] == 1:
+        comp_info += '^{aG'+str(z)+'-}'
+    if comp_list[6] == 1:
+        comp_info += '_{aM}'
+    # for i in range(len(comp_list)):
+    #     comp_info += str(comp_list[i]) + ","
+    if comp_list[5] == 1:
+        comp_info = "$" + comp_info + "$"
+    else:
+        comp_info = "$" + comp_info + "^{" + str(z) + "-}$"
+    return comp_info
 
 
 def get_n_hls_colors(num):

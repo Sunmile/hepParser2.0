@@ -131,7 +131,7 @@ def label_noise(sp_df, dict_mean, win=5):
         # print('x',x)
         th = find_min_mean(dict_mean,x)
         noise_th.append([x, th])
-        sp_df.loc[sp_df[sp_df['key1']==x][sp_df['Int']<=th].index.tolist(),'noise']=1
+        sp_df.loc[sp_df[(sp_df['key1']==x) & (sp_df['Int']<=th)].index.tolist(),'noise']=1
     return sp_df, np.array(noise_th)
 
 

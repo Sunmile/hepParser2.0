@@ -951,14 +951,15 @@ class MainWindow(QMainWindow):
         # 5.用于表格下载
         self.df = pd.DataFrame({
             '质荷比': self.label_message[0],
-            '电荷': self.label_message[1],
-            '脱H': self.label_message[2][:,0],
-            '加Na':self.label_message[2][:,1],
-            '理论质荷比': self.label_message[3],
-            '相对分子量': self.label_message[7],
-            '第几个同位素峰': self.label_message[4],
-            '分子组成': self.label_message[5],
-            '脱落基团': self.label_message[6]
+            '强度': self.label_message[1],
+            '电荷': self.label_message[2],
+            '脱H': self.label_message[3][:,0],
+            '加Na':self.label_message[3][:,1],
+            '理论质荷比': self.label_message[4],
+            '相对分子量': self.label_message[8],
+            '第几个同位素峰': self.label_message[5],
+            '分子组成': self.label_message[6],
+            '脱落基团': self.label_message[7]
         })
 
         # 颜色生成器
@@ -1346,16 +1347,16 @@ class MainWindow(QMainWindow):
                 self._fig.clear()
                 self.orgAx = self._fig.add_subplot(1, 1, 1)
                 xs, ys = format_peaks(self.spectrum)
-                save_file(self.peaks, "test.mgf")
+                # save_file(self.peaks, "test.mgf")
                 self.plot_origin_peaks(xs, ys)
                 self.load_merged_peaks()
             elif self.scan is not None:
                 self.spectrum, self.maxIntensity = get_peaks_by_id(self.mzmlFileName, self.scan)
-                save_file(self.spectrum, "938.mgf")
+                # save_file(self.spectrum, "938.mgf")
                 # 生成左侧边栏
                 self.generate_left_side(flag='single')
 
-                save_file(self.spectrum, "938.mgf")
+                # save_file(self.spectrum, "938.mgf")
                 # 画出原始图
                 self.figFlag[0] = 2
                 self._fig.clear()
