@@ -119,7 +119,7 @@ class mzMLWorker(QThread):
         time0 = time.time()
         dec_data = binascii.a2b_base64(data)
         dec_data = zlib.decompress(dec_data)
-        ret_data = np.frombuffer(dec_data, np.float64)
+        ret_data = np.frombuffer(dec_data, np.float64)# np.float64
 
         return ret_data
 
@@ -219,7 +219,7 @@ def smooth(z_data):
 def decodeBase64AndDecompressZlib(data):
     dec_data = binascii.a2b_base64(data)
     dec_data = zlib.decompress(dec_data)
-    ret_data = np.frombuffer(dec_data, np.float64)
+    ret_data = np.frombuffer(dec_data, np.float64) # np.float64
 
     return ret_data
 

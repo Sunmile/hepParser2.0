@@ -3,4 +3,4 @@
 .vscode/
 data/peaks.pk
 result
-draw_isotopic.ipynb
+./draw_isotopic.ipynb

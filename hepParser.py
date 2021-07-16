@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
 
     def _init_data(self):
         s = time.time()
-        dp= 4
+        dp= 20
         self.DATA0 = 'data/plot0_005_tic.pk'
 
         self.data_3d_file_name = 'data/plot0_005_smooth_tic.pk'
@@ -400,7 +400,7 @@ class MainWindow(QMainWindow):
 
         # 左侧面板
         self.right_label_page.setStyleSheet(qstr)
-        self.right_label_page.setFixedWidth(240)
+        # self.right_label_page.setFixedWidth(240)
 
         self.right_verticalLayout_mass.addWidget(self.select_mass_region)
         self.right_label_page_mass.setStyleSheet(qstr)
@@ -719,8 +719,9 @@ class MainWindow(QMainWindow):
         self.right_center_horizontalLayout.addWidget(change_info_region)
         self.struct_title_num.setText("&nbsp;序号<sup></sup>")
         self.struct_title_info.setText("&nbsp;&nbsp;&nbsp;分子组成<sup>a</sup>")
-        self.struct_title_info_2.setText("&nbsp;&nbsp;&nbsp;&nbsp;<sup>a</sup>[HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man]")
-        self.struct_title_score.setText("<sup></sup>&nbsp;&nbsp;&nbsp;&nbsp;单分子解释度")
+        # self.struct_title_info_2.setText("&nbsp;&nbsp;&nbsp;&nbsp;<sup>a</sup>[HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man]")
+        self.struct_title_info_2.setText(" ")
+        self.struct_title_score.setText("<sup></sup>&nbsp;&nbsp;单分子解释度")
 
         right_is, right_structs, right_scores = [], [], []
         for i in range(len(self.right_struct)):
