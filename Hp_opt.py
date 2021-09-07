@@ -2,9 +2,9 @@ from src.peak_align import *
 from src.isotopic_detect import *
 from src.match_score import *
 from src.label import *
+from src.significance_test import *
 
-
-def get_filter_MZ(origin_MZ, max_int, fit_list, the_HP, the_sp_path, max_ion=7, ppm=20, bound_th=0.001, bound_intensity=0, is_HNa=False):
+def get_filter_MZ(origin_MZ, max_int, fit_list, the_HP, the_sp_path, max_ion=7, ppm=20, bound_th=0.001, bound_intensity=0, is_HNa='H'):
     from src.preprocess import pre_process_data
     # 因为2个文件相互引用了，所以在这里import
 
@@ -39,12 +39,13 @@ def get_filter_MZ(origin_MZ, max_int, fit_list, the_HP, the_sp_path, max_ion=7, 
     return filter_MZ, max_int, total_int, exp_isp, the_spectra, dict_list
 
 
-def data_process(exp_isp, max_int, total_int, the_spectra, dict_list, the_HP, ppm=20):
-    prob = 0.95
-    result_path = 'result/'
+def data_process(peaks, exp_isp, max_int, total_int, the_spectra, dict_list, the_HP, chb_dA, chb_aM, chb_aG, min_dp=0,max_dp=20, ppm=20):
+    prob = 0.95 # 衍生峰得分权重系数
+    # confidence_list = get_probability(peaks, the_HP,the_spectra,ppm)
     all_comp, all_atom, all_comp_mass, all_comp_score, dict_exp_match, \
     dict_theo_list, all_score_list, all_score_mass, all_comp_lost, all_comp_z, all_comp_HNa = \
-        calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, ppm, prob=prob)
+        calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, chb_dA=chb_dA, chb_aM=chb_aM, chb_aG=chb_aG,
+                               min_dp=min_dp, max_dp=max_dp, ppm=ppm, prob=prob)
     t3 = time()
     # print('match time:', t3 - t7)
     match_result = [all_comp, all_atom, all_comp_mass, all_comp_score, dict_exp_match, dict_theo_list, all_score_list,
@@ -57,6 +58,22 @@ def data_process(exp_isp, max_int, total_int, the_spectra, dict_list, the_HP, pp
                                                                                           total_int,
                                                                                           candidate_sort_index,
                                                                                           len(candidate_sort_index))
+    # right_comp = []
+    # matched_count = []
+    # for i in range(len(key_with_order)):
+    #     tmp_key = key_with_order[i]
+    #     comp = str(dict_mass_comp[tmp_key])
+    #     tmp_c = len(dict_mass_family[tmp_key])
+    #     matched_count.append(tmp_c)
+    #     right_comp.append(comp)
+    # df_conf = pd.DataFrame(confidence_list, columns=['comp','prob', 'peak_count'])
+    # # df_conf.to_csv('result/df_conf.csv',index=None)
+    # df_conf['comp'] = [str(x) for x in df_conf['comp']]
+    # df_conf = df_conf[df_conf.comp.isin(right_comp)]
+    # if len(right_comp)<1:
+    #     df_conf['log_p'] = []
+    # else:
+    #     df_conf = get_pvalue(right_comp,matched_count,df_conf)
     # label_save = pd.DataFrame(np.array(label))
     # label_save.to_csv('result/label_save.csv', index=None)
     t5 = time()
@@ -65,12 +82,23 @@ def data_process(exp_isp, max_int, total_int, the_spectra, dict_list, the_HP, pp
     e = time()
     # print('Time cost', e - s)
     # label_info = get_n_result(match_result, max_candi + 1)
+
     label_info = [label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order]
-    if len(result2_score[1]) > 50:
-        label_info = [label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order[:50]]
-        return [match_result, label_info, 50, result2_score[1][:50]]
+    sup_n = 200
+    if len(result2_score[1]) > sup_n:
+        label_info = [label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order[:sup_n]]
+        return [match_result, label_info, sup_n, result2_score[1][:sup_n]]
     else:
         return [match_result, label_info, len(candidate_sort_index), result2_score[1]]
+
+
+def get_n_result(match_result, cand_num):
+    result2_score, candidate_sort_index = get_most_power_candidate_score(match_result)
+    label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order = get_n_label(match_result,
+                                                                                          candidate_sort_index,
+                                                                                          cand_num)
+    label_info = [label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order]
+    return label_info
 
 
 if __name__ == '__main__':

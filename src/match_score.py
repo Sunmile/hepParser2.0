@@ -385,7 +385,8 @@ def match_isotopic(exp_isp, the_isp, ppm, thresh, min_match_num, the_lost_list, 
            ret_the_z_list, ret_the_HNa_list
 
 
-def calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, ppm=10, thresh=0, min_match_num=3, prob=0.5):
+def calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int,chb_dA=False, chb_aM=False, chb_aG=False,
+                           min_dp=0, max_dp=20, ppm=10, thresh=0, min_match_num=3, prob=0.5):
     exp_isp = get_exp_isp(dict_list, max_int)
     exp_isp = sort_exp(exp_isp)
     exp_isp_01 = change_sp_format(exp_isp, 0.1)
@@ -421,6 +422,22 @@ def calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int, ppm=10, thre
         com_score = compared_score(exp_isp_01, the_isp_01)
         if com_score <= 0:
             # print(com_score)
+            pass_count += 1
+            continue
+        if chb_dA:
+            if one_comp[0] >0:
+                pass_count += 1
+                continue
+        if chb_aG:
+            if one_comp[-2]>0:
+                pass_count += 1
+                continue
+        if chb_aM:
+            if one_comp[-1]>0:
+                pass_count += 1
+                continue
+        tmp_dp= sum(one_comp)-one_comp[3]-one_comp[4]
+        if tmp_dp < min_dp or tmp_dp> max_dp:
             pass_count += 1
             continue
         score, match_list, match_theo_list, score_list, score_mass, match_lost_list, match_z_list, match_HNa_list, \

@@ -45,9 +45,9 @@ def generate_new_composition(filter_list, max_lost_count=20):
     return all_lost_list, lost_record
 
 
-## is_HNa: 是否以脱H加Na带负电
+## is_HNa: 是否以脱H加Na带负电, 或者 脱H 加 NH3
 ## 脱H上限为硫酸根数目加羧基数目
-def generate_theory_SP(atom, component, prob=0.5, max_ion=5, is_HNa=False):
+def generate_theory_SP(atom, component, prob=0.5, max_ion=5, is_HNa='H'):
     # all_com, lost_record = generate_new_composition([atom], 2)
     all_atom, all_comp, lost_record = [atom],[component],[[0, 0, 0, 0]]
     # pl(all_com)
@@ -71,12 +71,21 @@ def generate_theory_SP(atom, component, prob=0.5, max_ion=5, is_HNa=False):
         tmp_lwh['S'] = tmp_com[4]
         for j in charges:
             tmp_distribution = isotopic_variants(tmp_lwh, npeaks=5, charge=j)
-            if is_HNa:
+            if is_HNa !='H':
+                add_mass = 0
+                if is_HNa =='HNa':
+                    add_mass =dict_atom['Na']-1
+                elif is_HNa == 'HNH4':
+                    add_mass =dict_atom['N14']+4*dict_atom['H1']-1
                 max_H = y[0]+y[1]+y[4] # 糖醛酸数目加硫酸根数目
                 for n in range(-j, max_H+1):
                     diff_mass = 0
                     n_na = n+j # Na的数目是H的数目减电荷数
-                    diff_mass = n_na *(dict_atom['Na']-1) # 计算与只脱H的mass的差距
+                    ## for Na
+                    # diff_mass = n_na *(dict_atom['Na']-1) # 计算与只脱H的mass的差距
+                    ## for NH3
+                    # diff_mass = n_na *(dict_atom['N14']+4*dict_atom['H1']-1) # 计算与只脱H的mass的差距
+                    diff_mass = n_na * add_mass
                     diff_mass = diff_mass/np.abs(j)
                     tmp_mz = []
                     tmp_int = []
@@ -101,7 +110,7 @@ def generate_theory_SP(atom, component, prob=0.5, max_ion=5, is_HNa=False):
     return all_mz, lost_comp, Z_list, H_Na_count
 
 
-def cal_all_the_sp(all_atom_list, all_comp_list, prob, max_ion=5, is_HNa=False):
+def cal_all_the_sp(all_atom_list, all_comp_list, prob, max_ion=5, is_HNa='H'):
     all_the = []
     all_lost = []
     all_z = []
@@ -133,12 +142,8 @@ def cal_all_the_sp(all_atom_list, all_comp_list, prob, max_ion=5, is_HNa=False):
     return result
 
 
-def get_the_sp(dir, all_atom_list,all_comp_list, prob, max_ion, is_HNa=False):
-    dir = dir + str(max_ion)
-    if is_HNa:
-        dir+='HNa.pk'
-    else:
-        dir+='.pk'
+def get_the_sp(dir, all_atom_list,all_comp_list, prob, max_ion, is_HNa='H'):
+    dir = dir + str(max_ion)+is_HNa+'.pk'
     if os.path.exists(dir):
         with open(dir, 'rb') as f:
             data = pk.load(f)

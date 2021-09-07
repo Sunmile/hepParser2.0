@@ -1,5 +1,6 @@
 """
 author:houmeijie
+author2: wanghui
 """
 import colorsys
 import os
@@ -119,10 +120,11 @@ class DataWorker(QThread):
     sinID = pyqtSignal(int)
     sinDataInfo = pyqtSignal(list)
 
-    def __init__(self, parent=None, exp_isp=None, max_int=None, total_int=None, the_spectra=None, dict_list=None,
+    def __init__(self, parent=None, peaks=None, exp_isp=None, max_int=None, total_int=None, the_spectra=None, dict_list=None,
                  the_HP=None, ppm=None,
-                 bound_th=None, bound_intensity=None):
+                 bound_th=None, bound_intensity=None, chb_dA=False, chb_aM=False, chb_aG=False, min_dp=None,max_dp=None):
         super(DataWorker, self).__init__(parent)
+        self.peaks = peaks
         self.exp_isp = exp_isp
         self.max_int = max_int
         self.total_int = total_int
@@ -132,6 +134,11 @@ class DataWorker(QThread):
         self.ppm = ppm
         self.bound_th = bound_th
         self.bound_intensity = bound_intensity
+        self.chb_dA = chb_dA
+        self.chb_aM = chb_aM
+        self.chb_aG = chb_aG
+        self.min_dp = min_dp
+        self.max_dp = max_dp
 
     def run(self):
         class redirect:
@@ -151,9 +158,12 @@ class DataWorker(QThread):
         stdout = sys.stdout
         sys.stdout = redirect(self.sinID)
 
-        data_info = data_process(exp_isp=self.exp_isp, max_int=self.max_int, total_int=self.total_int,
+        data_info = data_process(peaks=self.peaks, exp_isp=self.exp_isp, max_int=self.max_int, total_int=self.total_int,
                                  the_spectra=self.the_spectra,
-                                 dict_list=self.dict_list, the_HP=self.the_HP, ppm=self.ppm)
+                                 dict_list=self.dict_list, the_HP=self.the_HP,
+                                 chb_dA=self.chb_dA, chb_aM=self.chb_aM, chb_aG=self.chb_aG,
+                                 min_dp=self.min_dp, max_dp=self.max_dp,
+                                 ppm=self.ppm)
 
         re, sys.stdout = sys.stdout, stdout
         # data_info = [peaks, max_intensity, exp_isp, label_info, candidate_max_num]
@@ -255,7 +265,7 @@ def get_molecular_mass(atom_list):
         Mass += atom_mass[i] * atom_list[i]
     return np.round(Mass, 5)
 
-def get_theory_mz(z, hna, comp, lost):
+def get_theory_mz(z, hna, comp, lost,is_HNa='H'):
     comp_atoms = [
         [8, 6, 0, 6, 0],  # 不饱和糖醛酸 HexA
         [10, 6, 0, 7, 0],  # 饱和糖醛酸  GlcA
@@ -287,13 +297,18 @@ def get_theory_mz(z, hna, comp, lost):
     tmp_lwh['S'] = tmp_com[4]
     tmp_distribution = isotopic_variants(tmp_lwh, npeaks=5, charge=-z)
     tmp_peak = tmp_distribution[0]
-    diff_mass = hna[1] * (dict_atom['Na'] - 1)  # 计算与只脱H的mass的差距
+    add_mass=0
+    if is_HNa =='HNa':
+        add_mass = dict_atom['Na'] - 1
+    elif is_HNa =='HNH4':
+        add_mass = dict_atom['N14'] + 4 * dict_atom['H1'] - 1
+    diff_mass = hna[1] * (add_mass)  # 计算与只脱H的mass的差距
     diff_mass = diff_mass / np.abs(z)
     mz = np.round(tmp_peak.mz + diff_mass, 4)
     return mass, mz
 
 
-def get_labels(label_info, peak_dict, lose_ion, new_key_with_order):
+def get_labels(label_info, peak_dict, lose_ion, new_key_with_order, is_HNa='H'):
     xy = []
     mass_label = {}  # (mz,inten):[mz,Z,compoment,lose,score],1和0分别是匹配上了原始结构，没匹配上原始结构
     mass_struct_tips = {}
@@ -345,7 +360,7 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order):
 
     # 标注的tips
     for key in mass_label.keys():
-        struct_info, structs, scores = format_struct_2(mass_label[key], lose_ion)
+        struct_info, structs, scores = format_struct_2(mass_label[key], lose_ion, is_HNa)
         mass_struct_tips[key] = "$m/z : " + str(key[0]) + "$ \n$intensity : " + str(key[1]) + "$\n" + struct_info
 
         # 转换label为5个list
@@ -368,7 +383,7 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order):
         int_list.append(peak_dict[line[0]])
         z_list.append(line[1])
         hna_list.append(line[2])
-        tmp_mass,tmp_mz = get_theory_mz(line[1],line[2],line[3],line[4])
+        tmp_mass,tmp_mz = get_theory_mz(line[1],line[2],line[3],line[4], is_HNa=is_HNa)
         the_mz_list.append(tmp_mz)
         the_mass_list.append(tmp_mass)
         comp_list.append(per_struct)
@@ -479,7 +494,7 @@ def format_struct(label_list, lose_ion):
     return struct_info, structs, scores
 
 
-def format_struct_2(label_list, lose_ion):
+def format_struct_2(label_list, lose_ion,is_HNa):
     struct_info = ""
     structs = []
     scores = []
@@ -511,7 +526,7 @@ def format_struct_2(label_list, lose_ion):
         else:
             per_struct += per_lost + "^{" + str(label[2]) + "-}"
         tmp_hna = label[3]
-        per_struct += '-'+str(tmp_hna[0])+'H+'+str(tmp_hna[1])+'Na'
+        per_struct += '-'+str(tmp_hna[0])+'H+'+str(tmp_hna[1])+is_HNa[1:]
         structs.append(per_struct)
         struct_info += '$' + str(label[-2]) + " : " + per_struct + '$ \n'
         scores.append(round(label[4], 5))

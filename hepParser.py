@@ -1,5 +1,6 @@
 """
 author:houmeijie
+author2: wanghui
 """
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -140,7 +141,7 @@ class MainWindow(QMainWindow):
         self.y_space = 20
         self.anno_text_size = 14
         self.opacity = [False, False, False, False]
-        self.is_HNa = True
+        self.is_HNa = 'HNa'  # H, HNa, HNH4
         self.scan_com_button = {}
         self.chk_list = []
         self.lose_ion = ["HSO_3", 'NH_2', 'NH_{2}SO_3', 'COOH']
@@ -152,13 +153,12 @@ class MainWindow(QMainWindow):
 
     def _init_data(self):
         s = time.time()
-        dp= 20
+        self.dp = 4
         self.DATA0 = 'data/plot0_005_tic.pk'
-
         self.data_3d_file_name = 'data/plot0_005_smooth_tic.pk'
         self.fit_list = get_fit_pk('data/Isotope_dist_fit')
-        self.the_HP = get_comp_pk('data/enox_',dp)  # 枚举的理论肝素结构
-        self.the_SP_path = 'data/enox_'+str(dp)+'_sp_0.1_noloss_'
+        self.the_HP = get_comp_pk('data/enox_',self.dp)  # 枚举的理论肝素结构
+        self.the_SP_path = 'data/enox_'+str(self.dp)+'_sp_0.1_noloss_'
         self.str_num = len(self.the_HP[2])
         self.peak_dict = {}  # 保存实验谱mz->absolute intensity
 
@@ -315,8 +315,83 @@ class MainWindow(QMainWindow):
         self.ppm_region_horizontalLayout.addWidget(self.edit_ppm)
         self.ppm_region_horizontalLayout.addWidget(self.right_anylyse)
 
+        self.scan_region = QWidget()
+        self.scan_region_horizontalLayout = QHBoxLayout(self.scan_region)
+        self.scan_region_horizontalLayout.setSpacing(10)
+        self.scan_region.setFixedWidth(200)
+        self.scan_info = QLabel()
+        self.scan_info.setText("Scan:")
+        self.scan_info.setStyleSheet("QLabel{background:none}")
+        self.scan_info.setFixedWidth(60)
+        self.scan_num = QLineEdit()
+        self.scan_num.setStyleSheet("QLabel{background:none}")
+        self.scan_num.setPlaceholderText(str(0))
+        self.scan_num.setText(str(0))
+        self.scan_num.setObjectName("font_gray")
+        self.scan_num.setFixedWidth(60)
+        self.scan_select= QPushButton("选择")
+        self.scan_select.clicked.connect(self.add_scan)
+        self.scan_select.setFixedWidth(58)
+        self.scan_select.setStyleSheet(scan_btn_str)
+        self.scan_region_horizontalLayout.addWidget(self.scan_info)
+        self.scan_region_horizontalLayout.addWidget(self.scan_num)
+        self.scan_region_horizontalLayout.addWidget(self.scan_select)
+
+        self.check_region = QWidget()
+        self.check_region_verticalLayout = QVBoxLayout(self.check_region)
+        self.check_region_verticalLayout.setSpacing(8)
+        self.check_region.setFixedWidth(200)
+        self.chb_dA = QCheckBox('No dA')
+        self.chb_dA.setChecked(False)
+        self.chb_aG = QCheckBox('No aG')
+        self.chb_aG.setChecked(False)
+        self.chb_aM = QCheckBox('No aM')
+        self.chb_aM.setChecked(False)
+        self.check_region_verticalLayout.addWidget(self.chb_dA)
+        self.check_region_verticalLayout.addWidget(self.chb_aG)
+        self.check_region_verticalLayout.addWidget(self.chb_aM)
+
+        self.dp_region1 = QWidget()
+        self.dp_region1_horizontalLayout = QHBoxLayout(self.dp_region1)
+        self.dp_region1_horizontalLayout.setSpacing(8)
+        self.dp_region1.setFixedWidth(180)
+        self.dp_info = QLabel()
+        self.dp_info.setText("Min dp:")
+        self.dp_info.setStyleSheet("QLabel{background:none}")
+        self.dp_info.setFixedWidth(60)
+        self.dp_min = QLineEdit()
+        self.dp_min.setStyleSheet("QLabel{background:none}")
+        self.dp_min.setPlaceholderText(str(4))
+        self.dp_min.setText(str(4))
+        self.dp_min.setObjectName("font_gray")
+        self.dp_min.setFixedWidth(60)
+        self.dp_region2 = QWidget()
+        self.dp_region2_horizontalLayout = QHBoxLayout(self.dp_region2)
+        self.dp_region2_horizontalLayout.setSpacing(8)
+        self.dp_region2.setFixedWidth(180)
+        self.dp_info2 = QLabel()
+        self.dp_info2.setText( "Max dp:")
+        self.dp_info2.setStyleSheet("QLabel{background:none}")
+        self.dp_info2.setFixedWidth(60)
+        self.dp_max = QLineEdit()
+        self.dp_max.setStyleSheet("QLabel{background:none}")
+        self.dp_max.setPlaceholderText(str(20))
+        self.dp_max.setText(str(20))
+        self.dp_max.setObjectName("font_gray")
+        self.dp_max.setFixedWidth(60)
+        self.dp_region1_horizontalLayout.addWidget(self.dp_info)
+        self.dp_region1_horizontalLayout.addWidget(self.dp_min)
+        self.dp_region2_horizontalLayout.addWidget(self.dp_info2)
+        self.dp_region2_horizontalLayout.addWidget(self.dp_max)
+
         self.right_config_verticalLayout.addWidget(self.right_tic)
         self.right_config_verticalLayout.addWidget(self.ppm_region)
+        self.right_config_verticalLayout.addWidget(self.scan_region)
+        self.right_config_verticalLayout.addWidget(self.check_region)
+        self.right_config_verticalLayout.addWidget(self.dp_region1)
+        self.right_config_verticalLayout.addWidget(self.dp_region2)
+
+
 
         self.right_function_verticalLayout.addWidget(self.right_config)
         self.right_function_verticalLayout.addStretch()
@@ -942,7 +1017,7 @@ class MainWindow(QMainWindow):
         #  self.labels = format_labels = self.label_info[0]
 
         self.xy, self.mass_labels, self.mass_struct_tips, self.right_struct, self.struct_id, self.label_message, self.labels \
-            = get_labels(self.label_info, self.peak_dict, self.lose_ion, self.key_with_order)
+            = get_labels(self.label_info, self.peak_dict, self.lose_ion, self.key_with_order,self.is_HNa)
 
         self.label_xs, self.label_ys = format_peaks_alone(self.xy)
 
@@ -955,7 +1030,7 @@ class MainWindow(QMainWindow):
             '强度': self.label_message[1],
             '电荷': self.label_message[2],
             '脱H': self.label_message[3][:,0],
-            '加Na':self.label_message[3][:,1],
+            self.is_HNa[1:]:self.label_message[3][:,1],
             '理论质荷比': self.label_message[4],
             '相对分子量': self.label_message[8],
             '第几个同位素峰': self.label_message[5],
@@ -1045,11 +1120,14 @@ class MainWindow(QMainWindow):
         self.figFlag[0] = 3
         self.dataDlgProcess = QAnalyseBar()
         self.dataDlgProcess.show()
-        self.dataThread = DataWorker(exp_isp=self.exp_isp, max_int=self.maxIntensity,
+        self.dataThread = DataWorker(exp_isp=self.exp_isp, peaks=self.peaks, max_int=self.maxIntensity,
                                      total_int=self.total_int, the_spectra=self.the_spectra,
                                      dict_list=self.dict_list, the_HP=self.the_HP,
                                      ppm=self.ppm, bound_th=self.bound_th,
-                                     bound_intensity=self.bound_intensity)
+                                     bound_intensity=self.bound_intensity,
+                                     min_dp=self.dp,
+                                     max_dp=self.dp
+                                     )
         self.dataThread.sinID.connect(self.updateDataProcessBar)
         self.dataThread.sinDataInfo.connect(self.infoParseProcess)
         self.dataThread.finished.connect(self._analyse_Composition)
@@ -1088,14 +1166,26 @@ class MainWindow(QMainWindow):
         self.figFlag[0] = 3
 
         self.ppm = int(self.edit_ppm.text())
+        self.dp = int(self.dp_min.text())
+        self.the_HP = get_comp_pk('data/enox_',self.dp)  # 枚举的理论肝素结构
+        self.the_SP_path = 'data/enox_'+str(self.dp)+'_sp_0.1_noloss_'
+        self.str_num = len(self.the_HP[2])
+        self.peak_dict = {}  # 保存实验谱mz->absolute intensity
+        self.load_merged_peaks()
         # self.load_merged_peaks()
         self.dataDlgProcess = QAnalyseBar()
         self.dataDlgProcess.show()
 
-        self.dataThread = DataWorker(exp_isp=self.exp_isp, max_int=self.maxIntensity, total_int=self.total_int,
+        self.dataThread = DataWorker(exp_isp=self.exp_isp, peaks=self.peaks, max_int=self.maxIntensity, total_int=self.total_int,
                                      the_spectra=self.the_spectra, dict_list=self.dict_list,
                                      the_HP=self.the_HP, ppm=self.ppm, bound_th=self.bound_th,
-                                     bound_intensity=self.bound_intensity)
+                                     bound_intensity=self.bound_intensity,
+                                     chb_dA=self.chb_dA.isChecked(),
+                                     chb_aM=self.chb_aM.isChecked(),
+                                     chb_aG=self.chb_aG.isChecked(),
+                                     min_dp=int(self.dp_min.text()),
+                                     max_dp=int(self.dp_max.text())
+                                     )
         self.dataThread.sinID.connect(self.updateDataProcessBar)
         self.dataThread.sinDataInfo.connect(self.infoParseProcess)
         self.dataThread.finished.connect(self._analyse_Composition)
@@ -1144,11 +1234,20 @@ class MainWindow(QMainWindow):
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
-            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载组成", 'data/formula.xlsx',
+            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "Download component", 'result/Luna_HILIC/1_ppm50_Na.xlsx', #XBridge_Amide
                                                                 "*.xlsx;;All Files(*)")
             if selectedDir != '':
-                # self.save_xls(selectedDir)
-                self.df.to_excel(selectedDir, index=False)
+                save_com = np.array(self.struct_df['composition'])
+                # for x in self.key_with_order:
+                #     save_com.append(self.label_info[1][x])
+                # save_com = [str(x) for x in save_com]
+                tmp_df = self.df
+                tmp_df['分子组成'] = tmp_df['分子组成'].astype('str')
+                save_df = self.df[tmp_df['分子组成'].isin(save_com)]
+                writer = pd.ExcelWriter(selectedDir)
+                save_df.to_excel(writer, sheet_name='annotation', index=None)
+                self.struct_df.to_excel(writer, sheet_name='components', index=None)
+                writer.save()
 
     # def save_xls(self, path):
     #     self.ws.write(0, 0, '质荷比')
@@ -1182,11 +1281,13 @@ class MainWindow(QMainWindow):
 
     def aboutUs(self):
         if platform.system() != "Windows":
-            QMessageBox.about(self, "关于hepParser",
-                              "     版本1.0.0(Beta版)      \n      Copyright © ICT       \n烟台中科生信智能科技中心\n中国科学院计算技术研究所\n                东诚药业")
+            QMessageBox.about(self, "About hepParser",
+                              "     Version 1.0.0(Beta)      \n      Copyright © ICT       \n"
+                              "Institute of Computing Technology, Chinese Academy of Sciences")
         else:
-            QMessageBox.about(self, "关于hepParser",
-                              "     版本1.0.0(Beta版)      \n     Copyright © ICT       \n烟台中科生信智能科技中心\n中国科学院计算技术研究所\n            东诚药业")
+            QMessageBox.about(self, "About hepParser",
+                              "     Version 1.0.0(Beta)      \n     Copyright © ICT       \n"
+                              "Institute of Computing Technology, Chinese Academy of Sciences")
 
     def closeEvent(self, event):
         reply = QMessageBox.question(self, 'Message',
@@ -1328,6 +1429,20 @@ class MainWindow(QMainWindow):
         self.radio_button_group.setExclusive(False)
         self.right_label_page_mass.show()
 
+    def add_scan(self):
+        if self.scan_num.text() is not None:
+            self.scan = int(self.scan_num.text())
+            self.spectrum, self.maxIntensity = get_peaks_by_id(self.mzmlFileName, self.scan)
+            # save_file(self.spectrum, "938.mgf")
+            # 生成左侧边栏
+            self.generate_left_side(flag='single')
+            # 画出原始图
+            self.figFlag[0] = 2
+            self._fig.clear()
+            self.orgAx = self._fig.add_subplot(1, 1, 1)
+            xs, ys = format_peaks(self.spectrum)
+            self.plot_origin_peaks(xs, ys)
+            self.load_merged_peaks()
 
     def rightPick(self):
         if self.figFlag[0] == 1:
