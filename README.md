@@ -1,2 +1,2 @@
-# hepParser
-a software for  heparin analysis
+# hepParser2.0
+a software for analysis of LMWHs.

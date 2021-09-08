@@ -31,7 +31,8 @@ def get_n_label(match_list, total_int, candidate_sort_index, n):
         id = candidate_sort_index[i]
         key_id = id * 10000
         tmp_mass = sorted_comp[id][2]
-        tmp_score = np.round(sorted_comp[id][3] * score_coff / max_score, 4)
+        # tmp_score = np.round(sorted_comp[id][3] * score_coff / max_score, 4)
+        tmp_score = np.round(sorted_comp[id][3],4)
         flag = [tmp_mass - 1, 0,[], [], 0]
         new_key = np.round(key_id + tmp_mass, 5)
         dict_mass_comp[new_key] = sorted_comp[id][0]
@@ -122,21 +123,41 @@ def get_most_power_candidate3(sorted_comp, has_considered_peak, has_added_candid
     return max_index
 
 
+# 如果有多个得分相同的结构，会被同时选中
 def get_most_power_candidate_score(match_list):
     result_score = []
     s1 = 0
     s2 = 0
+    mul_len = 0 # 去除加了好几个得分相同结构时对分数的影响
     # constant = (math.e*math.e)/(0.1+math.e*math.e)
     constant = 0.99
     r1 = []
     r2 = []
-    comp = np.array(match_list[0:4] + match_list[5:8]).T
-    sorted_comp = sorted(comp, key=lambda x: x[3], reverse=True)
-    n = len(sorted_comp)
-    dict_exp = match_list[4]
     has_added_candidate = []
     has_considered_peak = []
     dict_score = {}
+    comp = np.array(match_list[0:4] + match_list[5:8]).T
+    sorted_comp = sorted(comp, key=lambda x: x[3], reverse=True)
+    n = len(sorted_comp)
+    dict_id = {}
+    sc_group = [0]
+    if n<1:
+        print('no matched candidates')
+        result_score=[[],[]]
+        return result_score, has_added_candidate
+    pre_sc = sorted_comp[0][3]
+    for i in range(1,n):
+        tmp_sc = sorted_comp[i][3]
+        if tmp_sc<pre_sc:
+            for x in sc_group:
+                dict_id[x] = sc_group
+            sc_group=[i]
+        else:
+            sc_group.append(i)
+        pre_sc = tmp_sc
+    for x in sc_group:
+        dict_id[x] = sc_group
+    dict_exp = match_list[4]
     while len(has_added_candidate) < n:
         if len(has_added_candidate) == 0:
             best_index = 0
@@ -168,16 +189,18 @@ def get_most_power_candidate_score(match_list):
                     dict_score[first_mass] = score_list[i]
                     s2 += score_list[i]
 
-            has_added_candidate.append(best_index)
-            count_c = len(has_added_candidate)
+            has_added_candidate.extend(dict_id[best_index])
+            mul_len += len(dict_id[best_index])-1
+            count_c = len(has_added_candidate)-mul_len
             weight = np.power(constant, count_c)
-            r1.append(weight * s1)
-            r2.append(weight * s2)
+            for i in range(len(dict_id[best_index])):
+                r1.append(weight * s1)
+                r2.append(weight * s2)
         else:
             # print('Has selected all powerful candidates! ')
             # print('selected/all',len(has_added_candidate),'/',n)
             # break
-            count_c = len(has_added_candidate)
+            count_c = len(has_added_candidate)-mul_len
             for i in range(n - len(has_added_candidate)):
                 weight = np.power(constant, count_c + i)
                 r1.append(weight * s1)

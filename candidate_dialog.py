@@ -56,10 +56,11 @@ pbar_str = """
 
 class Ui_QWDialogSize(object):
 
-    def __init__(self, comps, chk_list, candi_score):
+    def __init__(self, comps, chk_list, candi_score, key_with_order):
         self.comps = comps
         self.chk_list = chk_list
         self.candi_score = candi_score
+        self.key_with_order = key_with_order
 
     def setupUi(self, QWDialogSize):
         _translate = QtCore.QCoreApplication.translate
@@ -140,7 +141,7 @@ class Ui_QWDialogSize(object):
         self.horizontalLayout.addWidget(self.right_struct_info)
 
         self.frame = QFrame(QWDialogSize)
-        self.frame.setMaximumSize(QtCore.QSize(90, 16777215))
+        self.frame.setMaximumSize(QtCore.QSize(160, 16777215))
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setFrameShadow(QFrame.Raised)
         self.frame.setObjectName("frame")
@@ -187,10 +188,10 @@ class Ui_QWDialogSize(object):
                 self.chkBox_list[i].setChecked(False)
 
     def select_advise(self):
-        better_index, better_score = get_first_max_num(self.candi_score)
+        select_id, better_score = get_first_max_num(self.candi_score,self.key_with_order)
         if self.select_addvise_chk.isChecked():
             for i in range(0, len(self.candi_score)):
-                if i <= better_index:
+                if i in select_id:
                     self.chk_list[i] = True
                     self.chkBox_list[i].setChecked(True)
                 else:
@@ -203,12 +204,14 @@ class Ui_QWDialogSize(object):
 
 
 class QmyDialogSize(QDialog):
-    def __init__(self, comps=None, chk_list=None, candi_score=None, parent=None):
+    def __init__(self, comps=None, chk_list=None, candi_score=None, key_with_order=None, parent=None):
         super().__init__(parent)  # 调用父类构造函数，创建窗体
         self.comps = comps
         self.chk_list = chk_list
         self.candi_score = candi_score
-        self.ui = Ui_QWDialogSize(comps=self.comps, chk_list=self.chk_list, candi_score=self.candi_score)  # 创建UI对象
+        self.key_with_order = key_with_order
+        self.ui = Ui_QWDialogSize(comps=self.comps, chk_list=self.chk_list,
+                                  candi_score=self.candi_score, key_with_order=self.key_with_order)  # 创建UI对象
         self.ui.setupUi(self)  # 构造UI界面
 
         self.setWindowFlags(QtCore.Qt.MSWindowsFixedSizeDialogHint)
@@ -221,10 +224,12 @@ class QmyDialogSize(QDialog):
         for i in range(0, len(self.comps)):
             chk_list.append(self.ui.chkBox_list[i].isChecked())
         if True not in chk_list:
-            better_index, better_score = get_first_max_num(self.candi_score)
+            select_id, better_score = get_first_max_num(self.candi_score, self.key_with_order)
+            if len(chk_list)<1:
+                return chk_list
             if self.select_addvise_chk.isChecked():
                 for i in range(0, len(self.candi_score)):
-                    if i <= better_index:
+                    if i in select_id:
                         self.chk_list[i] = True
         return chk_list
 

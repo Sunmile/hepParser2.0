@@ -237,8 +237,9 @@ def get_isotope(peak_dicts, exp_isp):
 
 def get_all_struct(label_info):
     right_comp = []
-    label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order = label_info
-    for mass in key_with_order:
+    label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order, df_conf = label_info
+    ascend_key = sorted(key_with_order)
+    for mass in ascend_key:
         tmp_index = dict_mass_family[mass]
         comp = dict_mass_comp[mass]
 
@@ -317,7 +318,7 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order, is_HNa='H'):
     key_id = {}
     right_comp = []
     new_labels = []
-    label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order = label_info
+    label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order, df_conf = label_info
     num = 0
 
     for mass in new_key_with_order:
@@ -332,7 +333,7 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order, is_HNa='H'):
         num += 1
         tmp_index = dict_mass_family[mass]
         comp = dict_mass_comp[mass]
-
+        p_adj = df_conf[df_conf.comp==str(comp)]['log_p'].values[0]
         per_struct = ""
         # for ele in comp:
         #     per_struct += str(ele) + ","
@@ -344,7 +345,7 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order, is_HNa='H'):
         if comp[6] == 1:
             per_struct += 'aM'
         # per_struct = "[" + per_struct[:-1] + "]"
-        right_comp.append([per_struct, '{:.2f}'.format(label[tmp_index[0]][5]), num, key_id[mass]])
+        right_comp.append([per_struct, '{:.2f}'.format(label[tmp_index[0]][5]),np.round(p_adj,2), num, key_id[mass]])
         struct_id[per_struct] = num
         for id in tmp_index:
             mz, z, hna, _, lose, score, th = label[id]  # _就是comp
@@ -397,7 +398,7 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order, is_HNa='H'):
 
 # 寻找衍生峰的mz、inten
 def get_family(label_info, peak_dict):
-    label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order = label_info
+    label, dict_mass_comp, dict_mass_flag, dict_mass_family, key_with_order, df_conf = label_info
     mass_family = {}
     for key in dict_mass_family.keys():
         mz = dict_mass_flag[key][0]
@@ -534,14 +535,19 @@ def format_struct_2(label_list, lose_ion,is_HNa):
     return struct_info[:-2], structs, scores
 
 
-def get_first_max_num(score_list):
-    max_candi, max_score = 0, 0.0
+def get_first_max_num(score_list, key_with_order):
+    select_id = []
+    if len(score_list)<1:
+        return select_id, 0
+    max_score_id = np.argmax(score_list)
+    max_score = np.max(score_list)
+
     for i in range(len(score_list)):
-        if score_list[i] > max_score:
-            max_candi = i
-            max_score = score_list[i]
-    print("better:", max_candi, max_score)
-    return max_candi, max_score
+        if i <= max_score_id:
+            id = key_with_order[i] // 10000
+            select_id.append(id)
+    print("better:", max_score)
+    return select_id, max_score
 
 
 def format_loss(lose_list, lose_ion):

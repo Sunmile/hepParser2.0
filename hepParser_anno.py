@@ -1,6 +1,5 @@
 """
 author:houmeijie
-author2: wanghui
 """
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -129,20 +128,21 @@ class MainWindow(QMainWindow):
         self._init_ui()
 
     def _init_config(self):
-        self.init_finish = False
-        self.figFlag = [0]  # tic：1  labels:2  famliy:3
-        self.total_comp = 5157
+        # 初始化一些配置
+        self.init_finish = False  # 不再使用
+        self.figFlag = [0]  # 用于显示处于哪个界面，不需要用数组 tic：1  labels:2  famliy:3
+        self.total_comp = 5157 #不再使用
         self.ppm = 20
         self.str_num = 1000
         self.max_ion = 10
         self.bound_th = 0.001
         self.bound_intensity = 300
-        self.x_space = 12
+        self.x_space = 12 # 控制 标注时上角标的位置
         self.y_space = 20
         self.anno_text_size = 14
-        self.opacity = [False, False, False, False]
-        self.is_HNa = 'HNa'  # H, HNa, HNH4
-        self.scan_com_button = {}
+        self.opacity = [False, False, False, False]  # 控制菜单栏4个按钮的背景色
+        self.is_HNa = True
+        self.scan_com_button = {}  # 不再使用
         self.chk_list = []
         self.lose_ion = ["HSO_3", 'NH_2', 'NH_{2}SO_3', 'COOH']
         if platform.system() != "Windows":
@@ -152,17 +152,19 @@ class MainWindow(QMainWindow):
             print("OS", platform.system())
 
     def _init_data(self):
+        # 初始化一些数据
         s = time.time()
-        self.dp = 4
+        dp = 4
         self.DATA0 = 'data/plot0_005_tic.pk'
+
         self.data_3d_file_name = 'data/plot0_005_smooth_tic.pk'
         self.fit_list = get_fit_pk('data/Isotope_dist_fit')
-        self.the_HP = get_comp_pk('data/enox_',self.dp)  # 枚举的理论肝素结构
-        self.the_SP_path = 'data/enox_'+str(self.dp)+'_sp_0.1_noloss_'
+        self.the_HP = get_comp_pk('data/enox_', dp)  # 枚举的理论肝素结构
+        self.the_SP_path = 'data/enox_' + str(dp) + '_sp_0.1_noloss_'
         self.str_num = len(self.the_HP[2])
         self.peak_dict = {}  # 保存实验谱mz->absolute intensity
 
-        # 用于保存excel
+        # 用于下载功能：保存excel
         self.wb = xlwt.Workbook()
         self.ws = self.wb.add_sheet('test')
 
@@ -170,6 +172,7 @@ class MainWindow(QMainWindow):
         print("load pk:", e - s)
 
     def _init_ui(self):
+        # 设置hepParser窗体
 
         # 获取总的屏幕大小
         screen = QDesktopWidget().screenGeometry()
@@ -196,16 +199,16 @@ class MainWindow(QMainWindow):
         # 窗体主要内容
         self._initcentralWidget()
 
-        # 右键菜单栏
+        # TIC界面中的右键菜单栏
         self._init_right_pick_menu()
 
     def _initcentralWidget(self):
 
-        # 左侧第1页
         self.centralWidget = QWidget(self)
 
         """左侧边栏的子面板1"""
         # 左侧第1页式tic页面，已被删除
+        # 历史版本里，左侧板块原来在右侧，所以变量名开头是right，可修改一下
 
         # 左侧第2页
         self.right_label_page = QWidget()
@@ -213,14 +216,14 @@ class MainWindow(QMainWindow):
         self.right_verticalLayout_2 = QVBoxLayout(self.right_label_page)
         self.right_verticalLayout_2.setContentsMargins(3, 3, 3, 3)
         self.right_verticalLayout_2.setSpacing(2)
-        
+
         # mass对比
         self.right_label_page_mass = QWidget()
         self.right_label_page_mass.setGeometry(QRect(0, 0, 356, 401))
         self.right_verticalLayout_mass = QVBoxLayout(self.right_label_page_mass)
         self.right_verticalLayout_mass.setContentsMargins(3, 3, 3, 3)
         self.right_verticalLayout_mass.setSpacing(2)
-        
+
         self.select_mass_region = QWidget()
         self.select_mass_vertical_layout = QVBoxLayout(self.select_mass_region)
         self.select_mass_vertical_layout.setContentsMargins(3, 3, 3, 3)
@@ -235,7 +238,7 @@ class MainWindow(QMainWindow):
 
         self.select_mass_scrollAreaWidgetContents = QWidget()
         self.select_mass_scrollAreaWidgetContents.setGeometry(QRect(0, 0, 348, 393))
-        
+
         self.select_mass_vertical_layout2 = QVBoxLayout(self.select_mass_scrollAreaWidgetContents)
         self.select_mass_vertical_layout2.setSpacing(2)
         self.select_mass_label = QLabel('可选mass列表')
@@ -267,7 +270,7 @@ class MainWindow(QMainWindow):
 
         self.select_mass_scrollArea.setWidget(self.select_mass_scrollAreaWidgetContents)
         self.select_mass_vertical_layout.addWidget(self.select_mass_scrollArea)
-        
+
         # 上半部分
         self.right_function_region = QWidget()
 
@@ -315,83 +318,8 @@ class MainWindow(QMainWindow):
         self.ppm_region_horizontalLayout.addWidget(self.edit_ppm)
         self.ppm_region_horizontalLayout.addWidget(self.right_anylyse)
 
-        self.scan_region = QWidget()
-        self.scan_region_horizontalLayout = QHBoxLayout(self.scan_region)
-        self.scan_region_horizontalLayout.setSpacing(10)
-        self.scan_region.setFixedWidth(200)
-        self.scan_info = QLabel()
-        self.scan_info.setText("Scan:")
-        self.scan_info.setStyleSheet("QLabel{background:none}")
-        self.scan_info.setFixedWidth(60)
-        self.scan_num = QLineEdit()
-        self.scan_num.setStyleSheet("QLabel{background:none}")
-        self.scan_num.setPlaceholderText(str(0))
-        self.scan_num.setText(str(0))
-        self.scan_num.setObjectName("font_gray")
-        self.scan_num.setFixedWidth(60)
-        self.scan_select= QPushButton("选择")
-        self.scan_select.clicked.connect(self.add_scan)
-        self.scan_select.setFixedWidth(58)
-        self.scan_select.setStyleSheet(scan_btn_str)
-        self.scan_region_horizontalLayout.addWidget(self.scan_info)
-        self.scan_region_horizontalLayout.addWidget(self.scan_num)
-        self.scan_region_horizontalLayout.addWidget(self.scan_select)
-
-        self.check_region = QWidget()
-        self.check_region_verticalLayout = QVBoxLayout(self.check_region)
-        self.check_region_verticalLayout.setSpacing(8)
-        self.check_region.setFixedWidth(200)
-        self.chb_dA = QCheckBox('No dA')
-        self.chb_dA.setChecked(False)
-        self.chb_aG = QCheckBox('No aG')
-        self.chb_aG.setChecked(False)
-        self.chb_aM = QCheckBox('No aM')
-        self.chb_aM.setChecked(False)
-        self.check_region_verticalLayout.addWidget(self.chb_dA)
-        self.check_region_verticalLayout.addWidget(self.chb_aG)
-        self.check_region_verticalLayout.addWidget(self.chb_aM)
-
-        self.dp_region1 = QWidget()
-        self.dp_region1_horizontalLayout = QHBoxLayout(self.dp_region1)
-        self.dp_region1_horizontalLayout.setSpacing(8)
-        self.dp_region1.setFixedWidth(180)
-        self.dp_info = QLabel()
-        self.dp_info.setText("Min dp:")
-        self.dp_info.setStyleSheet("QLabel{background:none}")
-        self.dp_info.setFixedWidth(60)
-        self.dp_min = QLineEdit()
-        self.dp_min.setStyleSheet("QLabel{background:none}")
-        self.dp_min.setPlaceholderText(str(4))
-        self.dp_min.setText(str(4))
-        self.dp_min.setObjectName("font_gray")
-        self.dp_min.setFixedWidth(60)
-        self.dp_region2 = QWidget()
-        self.dp_region2_horizontalLayout = QHBoxLayout(self.dp_region2)
-        self.dp_region2_horizontalLayout.setSpacing(8)
-        self.dp_region2.setFixedWidth(180)
-        self.dp_info2 = QLabel()
-        self.dp_info2.setText( "Max dp:")
-        self.dp_info2.setStyleSheet("QLabel{background:none}")
-        self.dp_info2.setFixedWidth(60)
-        self.dp_max = QLineEdit()
-        self.dp_max.setStyleSheet("QLabel{background:none}")
-        self.dp_max.setPlaceholderText(str(20))
-        self.dp_max.setText(str(20))
-        self.dp_max.setObjectName("font_gray")
-        self.dp_max.setFixedWidth(60)
-        self.dp_region1_horizontalLayout.addWidget(self.dp_info)
-        self.dp_region1_horizontalLayout.addWidget(self.dp_min)
-        self.dp_region2_horizontalLayout.addWidget(self.dp_info2)
-        self.dp_region2_horizontalLayout.addWidget(self.dp_max)
-
         self.right_config_verticalLayout.addWidget(self.right_tic)
         self.right_config_verticalLayout.addWidget(self.ppm_region)
-        self.right_config_verticalLayout.addWidget(self.scan_region)
-        self.right_config_verticalLayout.addWidget(self.check_region)
-        self.right_config_verticalLayout.addWidget(self.dp_region1)
-        self.right_config_verticalLayout.addWidget(self.dp_region2)
-
-
 
         self.right_function_verticalLayout.addWidget(self.right_config)
         self.right_function_verticalLayout.addStretch()
@@ -403,6 +331,7 @@ class MainWindow(QMainWindow):
         self.right_center_horizontalLayout.setContentsMargins(1, 1, 1, 1)
         self.right_center_horizontalLayout.setSpacing(2)
         self.right_center_horizontalLayout.setAlignment(Qt.AlignHCenter)
+
         # 下半部分
         self.right_struct_info = QWidget()
 
@@ -428,11 +357,9 @@ class MainWindow(QMainWindow):
         self.struct_title_num = QLabel()
         self.struct_title_info = QLabel()
         self.struct_title_score = QLabel()
-        self.struct_title_padj = QLabel()
         self.struct_title_region_horizontalLayout.addWidget(self.struct_title_num)
         self.struct_title_region_horizontalLayout.addWidget(self.struct_title_info)
         self.struct_title_region_horizontalLayout.addWidget(self.struct_title_score)
-        self.struct_title_region_horizontalLayout.addWidget(self.struct_title_padj)
 
         self.struct_title_info_2 = QLabel()
         self.struct_title_info_2.setObjectName("font8")
@@ -447,19 +374,15 @@ class MainWindow(QMainWindow):
         self.right_struct_region_verticalLayout = QVBoxLayout(self.right_struct_region)
         self.right_struct_score = QWidget()
         self.right_struct_score_verticalLayout = QVBoxLayout(self.right_struct_score)
-        self.right_struct_padj = QWidget()
-        self.right_struct_padj_verticalLayout = QVBoxLayout(self.right_struct_padj)
         self.right_struct_btn_verticalLayout.setSpacing(2)
         self.right_struct_region_verticalLayout.setSpacing(2)
         self.right_struct_score_verticalLayout.setSpacing(2)
-        self.right_struct_padj_verticalLayout.setSpacing(2)
         self.right_label_horizontalLayout.addWidget(self.right_struct_btn_region)
         self.right_label_horizontalLayout.addWidget(self.right_struct_region)
         self.right_label_horizontalLayout.addWidget(self.right_struct_score)
-        self.right_label_horizontalLayout.addWidget(self.right_struct_padj)
 
         self.right_verticalLayout_211.addWidget(self.struct_title_region)
-        # self.right_verticalLayout_211.addWidget(self.struct_title_info_2)
+        self.right_verticalLayout_211.addWidget(self.struct_title_info_2)
         self.right_verticalLayout_211.addWidget(self.right_comp_region)
 
         self.right_verticalLayout_211.addStretch()
@@ -467,6 +390,7 @@ class MainWindow(QMainWindow):
         self.right_scrollArea_21.setWidget(self.right_scrollAreaWidgetContents_21)
         self.right_verticalLayout_21.addWidget(self.right_scrollArea_21)
 
+        # 左侧面板
         sub_splitter = QSplitter(self)
         sub_splitter.setOrientation(Qt.Vertical)
         sub_splitter.addWidget(self.right_function_region)
@@ -479,14 +403,13 @@ class MainWindow(QMainWindow):
         sub_splitter.setHandleWidth(1)
         self.right_verticalLayout_2.addWidget(sub_splitter)
 
-        # 左侧面板
         self.right_label_page.setStyleSheet(qstr)
-        # self.right_label_page.setFixedWidth(240)
+        self.right_label_page.setFixedWidth(240)
 
         self.right_verticalLayout_mass.addWidget(self.select_mass_region)
         self.right_label_page_mass.setStyleSheet(qstr)
         self.right_label_page_mass.setFixedWidth(240)
-        
+
         # 中间图表面板
         self._fig = mpl.figure.Figure(figsize=(8, 5), dpi=72)  # 单位英寸
         self._fig.subplots_adjust(left=0.09, bottom=0.09, right=0.95, top=0.9, wspace=0.3, hspace=0.3)
@@ -497,7 +420,7 @@ class MainWindow(QMainWindow):
         self._drawInit()
         self._draw3D_init()
 
-        # 设置图的工具栏
+        # 设置图的工具栏,设置TIC界面的工具栏
         self._initFigToolBar()
 
         # 设置左侧边栏和右侧图表面板
@@ -527,8 +450,7 @@ class MainWindow(QMainWindow):
         self.naviToolbar.hide()
 
     def _initMenu(self):
-
-        # 菜单栏的action
+        # 菜单栏的功能按钮
         openMzFileAct = QAction('Open .mzML', self)
         openMzFileAct.setStatusTip('Open .mzML')
         openMzFileAct.triggered.connect(self.openTICByMzML)
@@ -559,7 +481,7 @@ class MainWindow(QMainWindow):
         exitMenuAct.setStatusTip('Exit application')
         exitMenuAct.triggered.connect(self.close)
 
-        # 菜单栏
+        # 将功能按钮加入菜单栏
         menubar = self.menuBar()
 
         fileMenu = menubar.addMenu('File')  # File还是&File
@@ -582,6 +504,8 @@ class MainWindow(QMainWindow):
 
     def _initToolBar(self):
         # 自定义的工具栏工具
+
+        # 创建功能按钮(QAction)
         self.openDirAction = QAction(QIcon('icon/folder.svg'), "打开目录", self)
         self.openDirAction.setStatusTip('Open raw directory')
         self.openDirAction.triggered.connect(self.openTICByRawDir)
@@ -607,7 +531,7 @@ class MainWindow(QMainWindow):
         self.downloadAction.setStatusTip('下载组成')
         self.downloadAction.triggered.connect(self.downloadTabel)
 
-        # 设置工具栏的语言
+        # 将功能按钮添加到工具栏
         self.tool_bar = QToolBar()
         self.tool_bar.setMovable(False)
         self.tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
@@ -622,6 +546,7 @@ class MainWindow(QMainWindow):
         self.tool_bar.addAction(self.tableAction)
         self.tool_bar.addAction(self.downloadAction)
 
+        # 设置功能按钮的样式
         self.tool_bar.setStyleSheet(navi_str)
         self.tool_bar.setIconSize(QSize(24, 24))
         self.addToolBar(Qt.LeftToolBarArea, self.tool_bar)
@@ -685,6 +610,7 @@ class MainWindow(QMainWindow):
         self.naviToolbar.setStyleSheet(fig_navi_str)
 
     def _drawInit(self):
+        # 设置打开软件时的背景
         img = Image.open('icon/background.png')
         ax1 = self._fig.add_subplot(1, 1, 1)
         ax1.imshow(img)
@@ -718,12 +644,13 @@ class MainWindow(QMainWindow):
         self.right_tic_verticalLayout.addWidget(tmp_region)
 
     def load_merged_peaks(self):
+        # 获取各种解析后的数据
         self.peaks, self.maxIntensity, self.total_int, self.exp_isp, self.the_spectra, self.dict_list = get_filter_MZ(
             origin_MZ=self.spectrum,
             max_int=self.maxIntensity,
             fit_list=self.fit_list,
             the_HP=self.the_HP,
-            the_sp_path = self.the_SP_path,
+            the_sp_path=self.the_SP_path,
             max_ion=self.max_ion,
             ppm=self.ppm,
             bound_th=self.bound_th,
@@ -733,7 +660,8 @@ class MainWindow(QMainWindow):
             self.peak_dict[peak[0]] = peak[1]
         self.origin_xs, self.origin_ys = format_peaks(self.peaks)
 
-    def plot_origin_peaks(self, xs, ys):  # 获取原始峰
+    def plot_origin_peaks(self, xs, ys):
+        # 获取原始峰
         self.naviToolbar.show()
         self.orgAx.plot(xs, ys, linewidth=1, c='gray', zorder=1)
         self.orgAx.set_ybound(lower=0, upper=1.1 * max(ys))
@@ -749,7 +677,6 @@ class MainWindow(QMainWindow):
         self.setOpacity()
 
     def _analyse_Composition(self):
-
         # 获取全部组成
         self.dataDlgProcess.close()
         self.all_right_struct, self.all_key_with_order = get_all_struct(self.label_info)
@@ -773,7 +700,6 @@ class MainWindow(QMainWindow):
             self.right_struct_btn_verticalLayout.itemAt(i).widget().deleteLater()
             self.right_struct_region_verticalLayout.itemAt(i).widget().deleteLater()
             self.right_struct_score_verticalLayout.itemAt(i).widget().deleteLater()
-            self.right_struct_padj_verticalLayout.itemAt(i).widget().deleteLater()
 
         # 重新添加按钮
         change_region = QWidget()
@@ -799,21 +725,16 @@ class MainWindow(QMainWindow):
 
         self.right_center_horizontalLayout.addWidget(change_region)
         self.right_center_horizontalLayout.addWidget(change_info_region)
-        # self.right_verticalLayout_22
-        # self.struct_title_num.setText("&nbsp;序号<sup></sup>")
-        # self.struct_title_info.setText("&nbsp;&nbsp;&nbsp;分子组成<sup>a</sup>")
-        # # self.struct_title_info_2.setText("&nbsp;&nbsp;&nbsp;&nbsp;<sup>a</sup>[HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man]")
-        # self.struct_title_score.setText("<sup></sup>&nbsp;&nbsp;&nbsp;&nbsp;单分子解释度")
-        self.struct_title_num.setText("&nbsp;No.<sup></sup>")
-        self.struct_title_info.setText("&nbsp;Component<sup></sup>")
-        # self.struct_title_info_2.setText("<sup>a</sup>")
-        self.struct_title_score.setText("<sup></sup>&nbsp;Score")
-        self.struct_title_padj.setText("<sup></sup>&nbsp;-log<sub>10</sub>p<sub>adj</sub>")
-        right_is, right_structs, right_scores,right_p = [], [], [],[]
+        self.struct_title_num.setText("&nbsp;序号<sup></sup>")
+        self.struct_title_info.setText("&nbsp;&nbsp;&nbsp;分子组成<sup>a</sup>")
+        self.struct_title_info_2.setText("&nbsp;&nbsp;&nbsp;&nbsp;<sup>a</sup>[HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man]")
+        self.struct_title_score.setText("<sup></sup>&nbsp;&nbsp;&nbsp;&nbsp;单分子解释度")
+
+        right_is, right_structs, right_scores = [], [], []
         for i in range(len(self.right_struct)):
             label_btn = QPushButton(str(i + 1))
             label_btn.setStyleSheet(
-                label_btn_str[:-1] + "QPushButton{background-color:" + self.colors_str[self.right_struct[i][3]] + "}")
+                label_btn_str[:-1] + "QPushButton{background-color:" + self.colors_str[self.right_struct[i][2]] + "}")
 
             label_btn.setFixedWidth(21)
 
@@ -823,30 +744,28 @@ class MainWindow(QMainWindow):
             label_score = QPushButton(str(self.right_struct[i][1]))
             label_score.setStyleSheet(label_struct_str)
 
-            label_padj = QPushButton(str(self.right_struct[i][2]))
-            label_padj.setStyleSheet(label_struct_str)
-
             label_btn.clicked.connect(lambda: self._labelFamilyPeak(self.sender().text()))
             label_struct.clicked.connect(lambda: self._labelFamilyPeak(self.struct_id[self.sender().text()]))
 
             self.right_struct_btn_verticalLayout.addWidget(label_btn)
             self.right_struct_region_verticalLayout.addWidget(label_struct)
             self.right_struct_score_verticalLayout.addWidget(label_score)
-            self.right_struct_padj_verticalLayout.addWidget(label_padj)
-
             right_is.append(i + 1)
             right_structs.append(self.right_struct[i][0])
             right_scores.append(self.right_struct[i][1])
-            right_p.append(self.right_struct[i][2])
-        self.struct_df = pd.DataFrame({"id": right_is, "components": right_structs, "score": right_scores, "-log_p_adj":right_p})
+
+        self.struct_df = pd.DataFrame({"id": right_is, "composition": right_structs, "score": right_scores})
+        # self.struct_df.to_csv("data/struct.csv", index=False)
+        # self.downloadStruct()
+
         for i in range(self.right_struct_btn_verticalLayout.count()):
             self.right_struct_btn_verticalLayout.itemAt(i).widget().setDisabled(True)
             self.right_struct_region_verticalLayout.itemAt(i).widget().setDisabled(True)
             self.right_struct_score_verticalLayout.itemAt(i).widget().setDisabled(True)
-            self.right_struct_padj_verticalLayout.itemAt(i).widget().setDisabled(True)
         self.massToStructs = {}
         self.massToStructsScore = {}
         self.massToStructsChks = {}
+        # 谱图中标注的部分，左上角和右上角
         for key in self.xy:
             label_list = self.mass_labels[key]
             a_list = []
@@ -875,7 +794,7 @@ class MainWindow(QMainWindow):
                                     fontsize=8, fontweight='extra bold')
                 a_list.append(a)
             self.mass_anotation[key] = a_list
-        # 画原始结构
+        # 画原始结构，鼠标进入和点击时显示的内容
         artists = []
         for i in range(len(self.label_xs)):
             a = self.orgAx.plot(self.label_xs[i], self.label_ys[i],
@@ -916,13 +835,14 @@ class MainWindow(QMainWindow):
         self.right_anylyse.setStyleSheet(scan_btn_str)
 
     def _drawTable(self):
+        # 显示的表格信息
         self.naviToolbar.hide()
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
             self._fig.clear()
             ax2 = self._fig.add_subplot(1, 1, 1)
-            rowLabel = ['质荷比', '电荷', '脱氢','加钠', '第几个同位素峰', '分子组成', '脱落基团']
+            rowLabel = ['质荷比', '电荷', '脱氢', '加钠', '第几个同位素峰', '分子组成', '脱落基团']
 
             table = ax2.table(cellText=self.labels[0:20], colLabels=rowLabel, rowLoc='center',
                               loc='center', cellLoc='center', fontsize=60, edges='open')
@@ -944,6 +864,7 @@ class MainWindow(QMainWindow):
         self.tableAction.triggered.connect(self._draw_composition)
 
     def _label(self):
+        # 单分子标注
         self.naviToolbar.show()
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
@@ -955,9 +876,9 @@ class MainWindow(QMainWindow):
                 self.right_center_horizontalLayout.itemAt(i).widget().deleteLater()
             self.struct_title_num.setText("&nbsp;序号<sup></sup>")
             self.struct_title_info.setText("&nbsp;&nbsp;&nbsp;分子组成<sup>a</sup>")
-            # self.struct_title_info_2.setText(
-            #     "&nbsp;&nbsp;&nbsp;&nbsp;<sup>a</sup>[HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man]")
-            self.struct_title_score.setText("<sup></sup>&nbsp;单分子解释度")
+            self.struct_title_info_2.setText(
+                "&nbsp;&nbsp;&nbsp;&nbsp;<sup>a</sup>[HexA,GlcA,GlcN,Ac,SO3,Levoglucosan,Man]")
+            self.struct_title_score.setText("<sup></sup>&nbsp;&nbsp;&nbsp;&nbsp;单分子解释度")
 
             change_btn = QPushButton("关闭单分子标注")  # 启动单分子标注
             change_info_region = QWidget()
@@ -979,6 +900,7 @@ class MainWindow(QMainWindow):
                 self.right_struct_score_verticalLayout.itemAt(i).widget().setDisabled(False)
 
     def _labelFamilyPeak(self, index):
+        # 单分子标注时，label出相关的峰
         for i in range(self.right_struct_btn_verticalLayout.count()):
             self.right_struct_btn_verticalLayout.itemAt(i).widget().setStyleSheet(
                 label_btn_str[:-1] + "QPushButton{background-color:" + self.colors_str[self.right_struct[i][2]] + "}")
@@ -998,7 +920,8 @@ class MainWindow(QMainWindow):
 
         # 标注出衍生峰和基团损失
 
-        mz_list, inten_list, comp_list, lose_list, z_list, hna_list, score_list = self.mass_family[self.key_with_order[index]]
+        mz_list, inten_list, comp_list, lose_list, z_list, hna_list, score_list = self.mass_family[
+            self.key_with_order[index]]
         xs, ys = format_peaks_2_dim(mzs=mz_list, intens=inten_list)
         self.ax1.plot(xs, ys, linewidth=1, c='blue', label=self.right_struct[index][0])
 
@@ -1024,14 +947,15 @@ class MainWindow(QMainWindow):
         self.opacity = [True, False, False, True]
         self.setOpacity()
 
-    def load_label(self):  # 转换标注数据
+    def load_label(self):
+        # 转换标注数据
 
         # 3.标注匹配上结构，红色
         print("family:", len(self.label_info[3]))
         #  self.labels = format_labels = self.label_info[0]
 
         self.xy, self.mass_labels, self.mass_struct_tips, self.right_struct, self.struct_id, self.label_message, self.labels \
-            = get_labels(self.label_info, self.peak_dict, self.lose_ion, self.key_with_order,self.is_HNa)
+            = get_labels(self.label_info, self.peak_dict, self.lose_ion, self.key_with_order)
 
         self.label_xs, self.label_ys = format_peaks_alone(self.xy)
 
@@ -1041,15 +965,14 @@ class MainWindow(QMainWindow):
         # 5.用于表格下载
         self.df = pd.DataFrame({
             '质荷比': self.label_message[0],
-            '强度': self.label_message[1],
-            '电荷': self.label_message[2],
-            '脱H': self.label_message[3][:,0],
-            self.is_HNa[1:]:self.label_message[3][:,1],
-            '理论质荷比': self.label_message[4],
-            '相对分子量': self.label_message[8],
-            '第几个同位素峰': self.label_message[5],
-            '分子组成': self.label_message[6],
-            '脱落基团': self.label_message[7]
+            '电荷': self.label_message[1],
+            '脱H': self.label_message[2][:, 0],
+            '加Na': self.label_message[2][:, 1],
+            '理论质荷比': self.label_message[3],
+            '相对分子量': self.label_message[7],
+            '第几个同位素峰': self.label_message[4],
+            '分子组成': self.label_message[5],
+            '脱落基团': self.label_message[6]
         })
 
         # 颜色生成器
@@ -1072,6 +995,7 @@ class MainWindow(QMainWindow):
         self.xmlInfo = xmlInfo
 
     def updateConvertProcessBar(self, preMess):
+        # raw转换mzML的进度条
         curr, total = preMess.split('/')
         QApplication.processEvents()  # 实时刷新界面
         self.dlgProgress.setValue(int(float(curr) * 100.0 / float(total)))
@@ -1080,6 +1004,7 @@ class MainWindow(QMainWindow):
         QApplication.processEvents()  # 实时刷新界面
 
     def updateDataProcessBar(self, ID):
+        # 组成分析时定的进度条
         QApplication.processEvents()  # 实时刷新界面
         self.dataDlgProcess.setValue(int(ID * 100.0 / self.str_num))
         QApplication.processEvents()  # 实时刷新界面
@@ -1087,6 +1012,7 @@ class MainWindow(QMainWindow):
         QApplication.processEvents()  # 实时刷新界面
 
     def update_prpcess_step_bar(self, step):
+        # 处理质谱的进度条
         QApplication.processEvents()  # 实时刷新界面
         if step == 0:
             self.data_process_bar.setLabelText("正 在 转 换 质 谱...")
@@ -1102,6 +1028,7 @@ class MainWindow(QMainWindow):
         self.match_result, self.label_info, self.candidate_max_num, self.candi_score = data_info
 
     def mxmlParseProcess(self):
+        # 子线程解析mzml数据
         self.mzThread = mzMLWorker(xmlFileName=self.mzmlFileName)
         self.mzThread.sinXml.connect(self.set_xmlInfo)
         self.data_process_bar = DPstepBar()
@@ -1110,7 +1037,8 @@ class MainWindow(QMainWindow):
         self.mzThread.finished.connect(self._draw3D)
         self.mzThread.start()
 
-    def getConvertProcess(self):  # msconvert 转换文件的进度条
+    def getConvertProcess(self):
+        # msconvert 转换文件的进度条
         self.dlgProgress = QProgressDialog("正在转换质谱格式...", "", 1, 100, self)
         self.dlgProgress_hori = QVBoxLayout(self.dlgProgress)
 
@@ -1130,47 +1058,45 @@ class MainWindow(QMainWindow):
         self.thread.start()
 
     def hep_analyse(self):
+        # 肝素组成分析
         print("debug:search")
         self.figFlag[0] = 3
         self.dataDlgProcess = QAnalyseBar()
         self.dataDlgProcess.show()
-        self.dataThread = DataWorker(exp_isp=self.exp_isp, peaks=self.peaks, max_int=self.maxIntensity,
+        self.dataThread = DataWorker(exp_isp=self.exp_isp, max_int=self.maxIntensity,
                                      total_int=self.total_int, the_spectra=self.the_spectra,
                                      dict_list=self.dict_list, the_HP=self.the_HP,
                                      ppm=self.ppm, bound_th=self.bound_th,
-                                     bound_intensity=self.bound_intensity,
-                                     min_dp=self.dp,
-                                     max_dp=self.dp
-                                     )
+                                     bound_intensity=self.bound_intensity)
         self.dataThread.sinID.connect(self.updateDataProcessBar)
         self.dataThread.sinDataInfo.connect(self.infoParseProcess)
         self.dataThread.finished.connect(self._analyse_Composition)
         self.dataThread.start()
 
     def change_comp(self):
+        # 修改组成列表
         if self.figFlag[0] < 2:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         elif self.figFlag[0] == 2:
             QMessageBox.information(self, "Message", "请先解析谱，然后再进行混合物分析")
         else:
             if len(self.chk_list) == 0:
-                select_id, better_score = get_first_max_num(self.candi_score, self.all_key_with_order)
+                better_index, better_score = get_first_max_num(self.candi_score)
                 for i in range(0, len(self.candi_score)):
-                    if i in select_id:
+                    if i <= better_index:
                         self.chk_list.append(True)
                     else:
                         self.chk_list.append(False)
             dlgTableSize = QmyDialogSize(comps=self.all_right_struct, chk_list=self.chk_list,
-                                         candi_score=self.candi_score, key_with_order=self.all_key_with_order)
+                                         candi_score=self.candi_score)
             ret = dlgTableSize.exec()  # 模态方式运行对话框
             if (ret == QDialog.Accepted):
                 self.chk_list = dlgTableSize.getCheckList()
 
             new_key_with_order = []
-            tmp_acend_key = sorted(self.all_key_with_order)
             for i in range(len(self.chk_list)):
                 if self.chk_list[i]:
-                    new_key_with_order.append(tmp_acend_key[i])
+                    new_key_with_order.append(self.all_key_with_order[i])
             self.key_with_order = new_key_with_order
             self._draw_composition()
 
@@ -1178,29 +1104,19 @@ class MainWindow(QMainWindow):
         self.right_anylyse.setStyleSheet(qstr)
 
     def apply_ppm(self):
+        # 修改ppm
         self.figFlag[0] = 3
 
         self.ppm = int(self.edit_ppm.text())
-        self.dp = int(self.dp_min.text())
-        self.the_HP = get_comp_pk('data/enox_',self.dp)  # 枚举的理论肝素结构
-        self.the_SP_path = 'data/enox_'+str(self.dp)+'_sp_0.1_noloss_'
-        self.str_num = len(self.the_HP[2])
-        self.peak_dict = {}  # 保存实验谱mz->absolute intensity
-        self.load_merged_peaks()
         # self.load_merged_peaks()
         self.dataDlgProcess = QAnalyseBar()
         self.dataDlgProcess.show()
 
-        self.dataThread = DataWorker(exp_isp=self.exp_isp, peaks=self.peaks, max_int=self.maxIntensity, total_int=self.total_int,
+        # 子线程去修改
+        self.dataThread = DataWorker(exp_isp=self.exp_isp, max_int=self.maxIntensity, total_int=self.total_int,
                                      the_spectra=self.the_spectra, dict_list=self.dict_list,
                                      the_HP=self.the_HP, ppm=self.ppm, bound_th=self.bound_th,
-                                     bound_intensity=self.bound_intensity,
-                                     chb_dA=self.chb_dA.isChecked(),
-                                     chb_aM=self.chb_aM.isChecked(),
-                                     chb_aG=self.chb_aG.isChecked(),
-                                     min_dp=int(self.dp_min.text()),
-                                     max_dp=int(self.dp_max.text())
-                                     )
+                                     bound_intensity=self.bound_intensity)
         self.dataThread.sinID.connect(self.updateDataProcessBar)
         self.dataThread.sinDataInfo.connect(self.infoParseProcess)
         self.dataThread.finished.connect(self._analyse_Composition)
@@ -1249,20 +1165,11 @@ class MainWindow(QMainWindow):
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
-            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "Download component", 'result/Luna_HILIC/1_ppm50_Na.xlsx', #XBridge_Amide
+            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "下载组成", 'data/formula.xlsx',
                                                                 "*.xlsx;;All Files(*)")
             if selectedDir != '':
-                save_com = np.array(self.struct_df['components'])
-                # for x in self.key_with_order:
-                #     save_com.append(self.label_info[1][x])
-                # save_com = [str(x) for x in save_com]
-                tmp_df = self.df
-                tmp_df['分子组成'] = tmp_df['分子组成'].astype('str')
-                save_df = self.df[tmp_df['分子组成'].isin(save_com)]
-                writer = pd.ExcelWriter(selectedDir)
-                save_df.to_excel(writer, sheet_name='annotation', index=None)
-                self.struct_df.to_excel(writer, sheet_name='components', index=None)
-                writer.save()
+                # self.save_xls(selectedDir)
+                self.df.to_excel(selectedDir, index=False)
 
     # def save_xls(self, path):
     #     self.ws.write(0, 0, '质荷比')
@@ -1296,13 +1203,11 @@ class MainWindow(QMainWindow):
 
     def aboutUs(self):
         if platform.system() != "Windows":
-            QMessageBox.about(self, "About hepParser",
-                              "     Version 1.0.0(Beta)      \n      Copyright © ICT       \n"
-                              "Institute of Computing Technology, Chinese Academy of Sciences")
+            QMessageBox.about(self, "关于hepParser",
+                              "     版本1.0.0(Beta版)      \n      Copyright © ICT       \n烟台中科生信智能科技中心\n中国科学院计算技术研究所\n                东诚药业")
         else:
-            QMessageBox.about(self, "About hepParser",
-                              "     Version 1.0.0(Beta)      \n     Copyright © ICT       \n"
-                              "Institute of Computing Technology, Chinese Academy of Sciences")
+            QMessageBox.about(self, "关于hepParser",
+                              "     版本1.0.0(Beta版)      \n     Copyright © ICT       \n烟台中科生信智能科技中心\n中国科学院计算技术研究所\n            东诚药业")
 
     def closeEvent(self, event):
         reply = QMessageBox.question(self, 'Message',
@@ -1314,7 +1219,6 @@ class MainWindow(QMainWindow):
         else:
             event.ignore()
 
-    # 画三维图
     def _draw3D_init(self):
         self.cursor = EventFactory(self._fig, self.figFlag)
         self._fig.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
@@ -1323,6 +1227,7 @@ class MainWindow(QMainWindow):
         self._fig.canvas.mpl_connect('scroll_event', self.cursor.scroll)
 
     def _draw3D(self):
+        # 画三维图
         self.right_label_page.hide()
         self.right_label_page_mass.hide()
         self.naviToolbar.hide()
@@ -1342,25 +1247,27 @@ class MainWindow(QMainWindow):
         for i in range(0, self.right_tic_verticalLayout.count()):
             self.right_tic_verticalLayout.itemAt(i).widget().deleteLater()
 
-    # 创建右键菜单
+
     def _init_right_pick_menu(self):
+        # 右键菜单
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
 
+        # 创建右键菜单
         self.contextMenu = QMenu(self)
         self.merge_action = self.contextMenu.addAction(u'合并指定范围的质谱')
         self.singe_scan_action = self.contextMenu.addAction(u'选择单个时间点的质谱')
         self.draw_according_to_mass = self.contextMenu.addAction(u'选个单个mass')
-
         self.cancel_action = self.contextMenu.addAction(u'取消')
 
+        # 给右键菜单的按钮绑定功能
         self.merge_action.triggered.connect(self.rightPick)
         self.singe_scan_action.triggered.connect(self.rightPick)
         self.draw_according_to_mass.triggered.connect(self.right_pick_draw_mass)
         self.cancel_action.triggered.connect(self.rightPickCancel)
 
     def show_context_menu(self, pos):
-        '''''
+        '''
         右键点击时调用的函数，菜单显示前，将它移动到鼠标点击的位置
         '''
         if self.figFlag[0] != 1:
@@ -1369,6 +1276,7 @@ class MainWindow(QMainWindow):
         self.contextMenu.show()
 
     def right_pick_draw_mass(self):
+        # 画mass对应的图
         if self.figFlag[0] == 1:
             self.mass = self.cursor.get_current_mass()
             if self.mass is None:
@@ -1378,60 +1286,58 @@ class MainWindow(QMainWindow):
                 precise_digits = 1
                 data_file_name = 'data/peaks.pk'
                 x, y, z = get_mass_data(data_file_name, aim_mass_list, precise_digits)
-                self.draw_3d_mass_data = [x,y,z]
+                self.draw_3d_mass_data = [x, y, z]
                 self.generate_left_side_mass()
                 self.opacity[0] = 1
                 self.showTICAction.setEnabled(self.opacity[0])
                 self.figFlag[0] = 5
                 self._fig.clear()
-                ax = self._fig.add_subplot(1,1,1)
-                draw_3d_mass(ax, x,y,z)
-                self._fig.canvas.draw_idle()     
+                ax = self._fig.add_subplot(1, 1, 1)
+                draw_3d_mass(ax, x, y, z)
+                self._fig.canvas.draw_idle()
 
     def get_concerned_mass_list(self, mass):
         return [576.0, 536.0, 528.0, 536.5, 567.5]
-    
 
     def show_compared_graph_func(self):
-        x,y,z = self.draw_3d_mass_data
+        x, y, z = self.draw_3d_mass_data
         index_list = []
         for i in range(len(self.radio_button_list)):
             if self.radio_button_list[i].isChecked():
                 index_list.append(i)
                 continue
 
-        if len(index_list)!=2:
+        if len(index_list) != 2:
             QMessageBox.information(self, "Message", "请先选择两个用于对比的mass值！")
-            
+
         else:
             self.figFlag[0] = 6
             self._fig.clear()
-            ax = self._fig.add_subplot(1,1,1)
-            draw_3d_mass_compare(ax, x,y,z, index_list[0], index_list[1])
+            ax = self._fig.add_subplot(1, 1, 1)
+            draw_3d_mass_compare(ax, x, y, z, index_list[0], index_list[1])
             self._fig.canvas.draw_idle()
             self.show_compared_graph_back.show()
-            self.show_compared_graph_back.setEnabled(True)            
-    
+            self.show_compared_graph_back.setEnabled(True)
+
     def show_compared_graph_back_func(self):
-        x,y,z = self.draw_3d_mass_data
+        x, y, z = self.draw_3d_mass_data
         self.figFlag[0] = 5
         self._fig.clear()
-        ax = self._fig.add_subplot(1,1,1)
-        draw_3d_mass(ax, x,y,z)
+        ax = self._fig.add_subplot(1, 1, 1)
+        draw_3d_mass(ax, x, y, z)
         self._fig.canvas.draw_idle()
         self.show_compared_graph_back.hide()
-        self.show_compared_graph_back.setEnabled(False) 
-
+        self.show_compared_graph_back.setEnabled(False)
 
     def generate_left_side_mass(self):
-        x,y,z = self.draw_3d_mass_data
+        x, y, z = self.draw_3d_mass_data
         for i in range(self.radio_button_amount):
             self.radio_button_group.removeButton(self.radio_button_list[i])
 
         for item in self.radio_button_list:
             self.radio_button_layout.removeWidget(item)
             del item
-        
+
         self.radio_button_list = []
         self.radio_button_amount = len(x)
 
@@ -1440,26 +1346,12 @@ class MainWindow(QMainWindow):
             self.radio_button_list.append(tbutton)
             self.radio_button_layout.addWidget(tbutton)
             self.radio_button_group.addButton(tbutton)
-        
+
         self.radio_button_group.setExclusive(False)
         self.right_label_page_mass.show()
 
-    def add_scan(self):
-        if self.scan_num.text() is not None:
-            self.scan = int(self.scan_num.text())
-            self.spectrum, self.maxIntensity = get_peaks_by_id(self.mzmlFileName, self.scan)
-            # save_file(self.spectrum, "938.mgf")
-            # 生成左侧边栏
-            self.generate_left_side(flag='single')
-            # 画出原始图
-            self.figFlag[0] = 2
-            self._fig.clear()
-            self.orgAx = self._fig.add_subplot(1, 1, 1)
-            xs, ys = format_peaks(self.spectrum)
-            self.plot_origin_peaks(xs, ys)
-            self.load_merged_peaks()
-
     def rightPick(self):
+        # TIC右击后的一些处理
         if self.figFlag[0] == 1:
             self.scan_range = self.cursor.get_current_scan_range()
             self.scan = self.cursor.get_current_scan()
@@ -1478,16 +1370,16 @@ class MainWindow(QMainWindow):
                 self._fig.clear()
                 self.orgAx = self._fig.add_subplot(1, 1, 1)
                 xs, ys = format_peaks(self.spectrum)
-                # save_file(self.peaks, "test.mgf")
+                save_file(self.peaks, "test.mgf")
                 self.plot_origin_peaks(xs, ys)
                 self.load_merged_peaks()
             elif self.scan is not None:
                 self.spectrum, self.maxIntensity = get_peaks_by_id(self.mzmlFileName, self.scan)
-                # save_file(self.spectrum, "938.mgf")
+                save_file(self.spectrum, "938.mgf")
                 # 生成左侧边栏
                 self.generate_left_side(flag='single')
 
-                # save_file(self.spectrum, "938.mgf")
+                save_file(self.spectrum, "938.mgf")
                 # 画出原始图
                 self.figFlag[0] = 2
                 self._fig.clear()

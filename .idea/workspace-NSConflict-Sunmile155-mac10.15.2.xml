@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1b7971e6-8bec-477a-9f67-96876a63e1d7" name="Default Changelist" comment="has implemented the lasso fit for exp sp">
+      <change afterPath="$PROJECT_DIR$/938.mgf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/F12_filter_same_int.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/F12_final_filter.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/F12_merge.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/F12_orginal.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/HNa.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/annotate_0.01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/annotate_0.05.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/annotate_0.1.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/annotate_0.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/iso_sep.svg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/draw_isotopic.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/origin.mgf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Hp_opt.py" beforeDir="false" afterPath="$PROJECT_DIR$/Hp_opt.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/compat.h" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/compat.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/compat.pxd" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/compat.pxd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/composition.pxd" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/composition.pxd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/composition.pyx" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/composition.pyx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/double_vector.pxd" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/double_vector.pxd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/double_vector.pyx" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/double_vector.pyx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/isotopic_constants.pxd" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/isotopic_constants.pxd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/isotopic_constants.pyx" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/isotopic_constants.pyx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/isotopic_distribution.pxd" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/isotopic_distribution.pxd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_c/isotopic_distribution.pyx" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_c/isotopic_distribution.pyx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_speedup.pxd" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_speedup.pxd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/_speedup.pyx" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/_speedup.pyx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/brainpy.py" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/brainpy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/composition.py" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/composition.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/mass_dict.py" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/mass_dict.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/test/test_composition.py" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/test/test_composition.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainpy/test/test_isotopic_distribution.py" beforeDir="false" afterPath="$PROJECT_DIR$/brainpy/test/test_isotopic_distribution.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/candidate_dialog.py" beforeDir="false" afterPath="$PROJECT_DIR$/candidate_dialog.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/draw_3D.py" beforeDir="false" afterPath="$PROJECT_DIR$/draw_3D.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hepParser.py" beforeDir="false" afterPath="$PROJECT_DIR$/hepParser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/analysing.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/analysing.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/back.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/back.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/bars.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/bars.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/config.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/config.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/download-svgrepo-com.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/download-svgrepo-com.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/folder.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/folder.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/home-run.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/home-run.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/left-arrow.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/left-arrow.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/move.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/move.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/next.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/next.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/statistics.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/statistics.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/table-svgrepo-com.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/table-svgrepo-com.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/text-file-svgrepo-com.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/text-file-svgrepo-com.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/text.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/text.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/icon/zoom.svg" beforeDir="false" afterPath="$PROJECT_DIR$/icon/zoom.svg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/BDal.BCO.Constants.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/BDal.BCO.Constants.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/BDal.BCO.Objects.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/BDal.BCO.Objects.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/BDal.CCO.Constants.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/BDal.CCO.Constants.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/BDal.CCO.Objects.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/BDal.CCO.Objects.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/BaseDataAccess.dll.config" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/BaseDataAccess.dll.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/CustomDataSourceDialog.dll.config" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/CustomDataSourceDialog.dll.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/DigitalRune.Windows.Docking.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/DigitalRune.Windows.Docking.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/EULA.MHDAC" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/EULA.MHDAC" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/EULA.RawFileReader" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/EULA.RawFileReader" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/EULA.SFCS" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/EULA.SFCS" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/EULA.TimsSDK" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/EULA.TimsSDK" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/FlexVariableTable.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/FlexVariableTable.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/ICRVariableTable.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/ICRVariableTable.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/Interop.EDAL.SxS.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/Interop.EDAL.SxS.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/Interop.HSREADWRITELib.SxS.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/Interop.HSREADWRITELib.SxS.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/MSConvertGUI.exe.config" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/MSConvertGUI.exe.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/MSConvertGUI.exe.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/MSConvertGUI.exe.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/Microsoft.VC90.CRT.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/Microsoft.VC90.CRT.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/Microsoft.VC90.MFC.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/Microsoft.VC90.MFC.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/Microsoft.VC90.OpenMP.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/Microsoft.VC90.OpenMP.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/Newtonsoft.Json.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/Newtonsoft.Json.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/STL_Containers.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/STL_Containers.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/ThermoFisher.CommonCore.Data.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/ThermoFisher.CommonCore.Data.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/ThermoFisher.CommonCore.RawFileReader.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/ThermoFisher.CommonCore.RawFileReader.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/bdal-logconf.xml" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/bdal-logconf.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/msconvert.exe.config" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/msconvert.exe.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/quantitation_1.xsd" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/quantitation_1.xsd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/quantitation_2.xsd" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/quantitation_2.xsd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/seems.exe.config" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/seems.exe.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/seems.exe.manifest" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/seems.exe.manifest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/msconvert/unimod_2.xsd" beforeDir="false" afterPath="$PROJECT_DIR$/msconvert/unimod_2.xsd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mzML_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/mzML_parser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qss.py" beforeDir="false" afterPath="$PROJECT_DIR$/qss.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirement.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirement.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/result/label_save.csv" beforeDir="false" afterPath="$PROJECT_DIR$/result/label_save.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/result/result2_score0.5.csv" beforeDir="false" afterPath="$PROJECT_DIR$/result/result2_score0.5.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spectra_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/spectra_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Note" beforeDir="false" afterPath="$PROJECT_DIR$/src/Note" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/atom_mass.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/atom_mass.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deprecated.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/deprecated.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/enumerate.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/enumerate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/isotopic_detect.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/isotopic_detect.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/label.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/label.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/match_score.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/match_score.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/parameter_fitting.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/parameter_fitting.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/peak_align.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/peak_align.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/preprocess.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/preprocess.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/theory_sp.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/theory_sp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils.py" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/hepParser.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="585">
+              <caret line="980" column="35" lean-forward="true" selection-start-line="980" selection-start-column="35" selection-end-line="980" selection-end-column="35" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>label_message</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/Note" />
+        <option value="$PROJECT_DIR$/src/deprecated.py" />
+        <option value="$PROJECT_DIR$/src/enumerate.py" />
+        <option value="$PROJECT_DIR$/src/parameter_fitting.py" />
+        <option value="$PROJECT_DIR$/Hp_opt.py" />
+        <option value="$PROJECT_DIR$/spectra_tools.py" />
+        <option value="$PROJECT_DIR$/hepParser.py" />
+      </list>
+    </option>
+  </component>
+  <component name="JupyterTrust" id="04f5c38a-b431-47a9-ab62-ae374e0f5a2b" />
+  <component name="ProjectFrameBounds" fullScreen="true">
+    <option name="width" value="1440" />
+    <option name="height" value="900" />
+  </component>
+  <component name="ProjectId" id="1hD7gyuAdXVr7YX1axo3a9M0VaS" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="hepParser" type="b2602c69:ProjectViewProjectNode" />
+              <item name="hepParser" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="hepParser" type="b2602c69:ProjectViewProjectNode" />
+              <item name="hepParser" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="two.files.diff.last.used.file" value="$PROJECT_DIR$/../../../transport/hepParser-tem/hepParser.py" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\jianguo\mynuts\work\hepParser\src" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SpellCheckerSettings" BundledDictionaries="0" Folders="0" CustomDictionaries="0" Dictionaries="0" CorrectionsLimit="5" DefaultDictionary="application-level" UseSingleDictionary="true" />
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1b7971e6-8bec-477a-9f67-96876a63e1d7" name="Default Changelist" comment="" />
+      <created>1599533923489</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1599533923489</updated>
+      <workItem from="1599533925254" duration="26405000" />
+      <workItem from="1599701467967" duration="2226000" />
+      <workItem from="1600917258164" duration="324000" />
+      <workItem from="1600934397350" duration="5663000" />
+      <workItem from="1624330108514" duration="7512000" />
+      <workItem from="1624435512772" duration="5528000" />
+      <workItem from="1624441287794" duration="14099000" />
+      <workItem from="1624593538162" duration="11219000" />
+      <workItem from="1624720922290" duration="10665000" />
+      <workItem from="1624849677421" duration="3026000" />
+      <workItem from="1624856913578" duration="9571000" />
+      <workItem from="1625108812127" duration="8708000" />
+      <workItem from="1625419453132" duration="982000" />
+      <workItem from="1625455346166" duration="598000" />
+      <workItem from="1625464845555" duration="242000" />
+      <workItem from="1625576054713" duration="790000" />
+    </task>
+    <task id="LOCAL-00001" summary="combine the DICP version and Draw 3d version">
+      <created>1624436415861</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1624436415861</updated>
+    </task>
+    <task id="LOCAL-00002" summary="reconstruct the hepParser">
+      <created>1624518409930</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1624518409930</updated>
+    </task>
+    <task id="LOCAL-00003" summary="reconstruct the preprocess">
+      <created>1624519524569</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1624519524569</updated>
+    </task>
+    <task id="LOCAL-00004" summary="add the Note for some important variables">
+      <created>1624614123664</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1624614123664</updated>
+    </task>
+    <task id="LOCAL-00005" summary="has implemented the lasso fit for exp sp">
+      <created>1624849754030</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1624849754030</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="22250000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <editor active="true" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.18025751" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.38785625" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.48079306" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="8" />
+      <window_info anchor="bottom" id="Database Changes" order="9" />
+      <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
+      <window_info anchor="bottom" id="Terminal" order="11" />
+      <window_info anchor="bottom" id="Python Console" order="12" weight="0.23420075" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="SciView" order="3" />
+      <window_info anchor="right" id="Database" order="4" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="RECENTLY_FILTERED_USER_GROUPS">
+                <collection />
+              </option>
+              <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+                <collection />
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list />
+          </value>
+        </entry>
+        <entry key="User">
+          <value>
+            <list />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+    <MESSAGE value="combine the DICP version and Draw 3d version" />
+    <MESSAGE value="reconstruct the hepParser" />
+    <MESSAGE value="reconstruct the preprocess" />
+    <MESSAGE value="add the Note for some important variables" />
+    <MESSAGE value="has implemented the lasso fit for exp sp" />
+    <option name="LAST_COMMIT_MESSAGE" value="has implemented the lasso fit for exp sp" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/parameter_fitting.py</url>
+          <line>192</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Hp_opt.py</url>
+          <line>32</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/hepParser$Hp_opt.coverage" NAME="Hp_opt Coverage Results" MODIFIED="1599552428441" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/hepParser$parameter_fitting.coverage" NAME="parameter_fitting Coverage Results" MODIFIED="1624942761629" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/hepParser_py$hepParser.coverage" NAME="hepParser Coverage Results" MODIFIED="1625457165673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/hepParser$hepParser.coverage" NAME="hepParser Coverage Results" MODIFIED="1625420721292" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/deprecated.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="240">
+          <caret line="122" selection-start-line="122" selection-end-line="122" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/lib/python3.7/site-packages/sklearn/linear_model/_coordinate_descent.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="1015" column="34" selection-start-line="1015" selection-start-column="25" selection-end-line="1015" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/theory_sp.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1708">
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/enumerate.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="374">
+          <caret line="247" column="9" selection-start-line="247" selection-start-column="9" selection-end-line="247" selection-end-column="9" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/preprocess.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/parameter_fitting.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="179">
+          <caret line="168" column="36" selection-start-line="168" selection-start-column="36" selection-end-line="168" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Hp_opt.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="10" column="14" selection-start-line="10" selection-start-column="14" selection-end-line="10" selection-end-column="14" />
+          <folding>
+            <element signature="e#0#28#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/lib/python3.7/site-packages/numpy/core/multiarray.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="661">
+          <caret line="337" column="23" selection-start-line="337" selection-start-column="23" selection-end-line="337" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/Note">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="912">
+          <caret line="48" column="41" selection-start-line="48" selection-start-column="28" selection-end-line="48" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/isotopic_detect.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="314">
+          <caret line="205" column="24" selection-start-line="205" selection-start-column="24" selection-end-line="205" selection-end-column="24" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="177">
+          <caret line="182" column="29" selection-start-line="182" selection-start-column="29" selection-end-line="182" selection-end-column="29" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/spectra_tools.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="149">
+          <caret line="288" column="11" selection-start-line="288" selection-start-column="11" selection-end-line="288" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/hepParser.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="585">
+          <caret line="980" column="35" lean-forward="true" selection-start-line="980" selection-start-column="35" selection-end-line="980" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
