@@ -981,7 +981,7 @@ class MainWindow(QMainWindow):
     def _labelFamilyPeak(self, index):
         for i in range(self.right_struct_btn_verticalLayout.count()):
             self.right_struct_btn_verticalLayout.itemAt(i).widget().setStyleSheet(
-                label_btn_str[:-1] + "QPushButton{background-color:" + self.colors_str[self.right_struct[i][2]] + "}")
+                label_btn_str[:-1] + "QPushButton{background-color:" + self.colors_str[self.right_struct[i][3]] + "}")
             self.right_struct_btn_verticalLayout.itemAt(i).widget().setFixedWidth(21)
             self.right_struct_region_verticalLayout.itemAt(i).widget().setStyleSheet(label_struct_str)
             self.right_struct_score_verticalLayout.itemAt(i).widget().setStyleSheet(label_struct_str)
@@ -1249,7 +1249,7 @@ class MainWindow(QMainWindow):
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
-            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "Download component", 'result/Luna_HILIC/1_ppm50_Na.xlsx', #XBridge_Amide
+            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "Download component", 'result/XBridge_Amide/1_ppm50_Na.xlsx', #XBridge_Amide
                                                                 "*.xlsx;;All Files(*)")
             if selectedDir != '':
                 save_com = np.array(self.struct_df['components'])

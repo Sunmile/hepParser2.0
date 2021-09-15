@@ -75,6 +75,8 @@ def get_pvalue(right_comp, matched_count, df_conf):
         n = np.int(df_conf.loc[i,'peak_count'])
         k = np.int(df_conf.loc[i,'matched'])
         one_p = get_p_sig(k,n,prob)
+        if one_p == 0:
+            one_p += 1E-50
         pvalue.append(one_p)
     df_conf['pvalue'] = pvalue
     R_stats = importr('stats')
@@ -83,5 +85,5 @@ def get_pvalue(right_comp, matched_count, df_conf):
     df_conf['p1']=p_adj
     df_conf['p2']=p_adj2
     df_conf['log_p'] = -np.log10(df_conf['p2'])
-    # df_conf.to_csv('result/conf_fine.csv',index=None)
+    df_conf.to_csv('result/conf_fine.csv',index=None)
     return df_conf
