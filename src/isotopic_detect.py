@@ -1,11 +1,10 @@
 import numpy as np
-import pandas as pd
-import copy
 import pickle as pk
 import os
 import matplotlib.pyplot as plt
-from src.enumerate import *
-from src.utils import *
+from src.enumerate import enumerate_enoxaparin
+
+from src.utils import get_JS, get_molecular_mass,filter_component, transform_component_to_atom, save_pk
 from brainpy import isotopic_variants
 
 
@@ -28,6 +27,8 @@ def get_one_Z_isotopic(MZ_list, fit_list, dict_list, ppm=10, Z=1, isotopic_num=5
     for i in range(len(MZ_list)):
         if visited_list[i] == 0:
             M = MZ_list[i][0]
+            # if np.abs(505.46661-M)<0.0001:
+            #     print('a')
             flag_M = M
             flag_num = 1
             mass_l = [M]
@@ -57,9 +58,9 @@ def get_one_Z_isotopic(MZ_list, fit_list, dict_list, ppm=10, Z=1, isotopic_num=5
                     flag_num += 1
                     if flag_num >= isotopic_num:
                         break
-            if np.count_nonzero(isotopic_record[i]) >= 3 \
+            if np.count_nonzero(isotopic_record[i]) >= 2 \
                     and np.sum(isotopic_record[i]) >= max_int * 0.005 \
-                    and isotopic_record[i][1] + isotopic_record[i][3] > 0:
+                    and isotopic_record[i][1] > 0:
                 theory_distribution = [x(M * Z) if x(M * Z) > 0 else 0 for x in fit_list]
                 tmp_js_sim = 1 - get_JS(theory_distribution, isotopic_record[i])
                 if tmp_js_sim > js_sim_th:
@@ -168,8 +169,8 @@ def fit_all_point(point_list, degree=2):
     return [p1, p2, p3, p4, p5]
 
 
-def get_fit_pk(dir, dp):
-    dir = dir + str(dp) + '.pk'
+def get_fit_pk(dir, max_dp):
+    dir = dir + str(max_dp) + '.pk'
     if os.path.exists(dir):
         with open(dir, 'rb') as f:
             data = pk.load(f)
@@ -177,8 +178,8 @@ def get_fit_pk(dir, dp):
     else:
         # all_list = enumerate_component(20)  # 枚举所有可能肝素分子的构成
         # dict_dp_list = enumerate_dalteparin(dp)
-        dict_dp_list = enumerate_enoxaparin(dp)
-        all_list = dict_dp_list[dp]
+        dict_dp_list = enumerate_enoxaparin(max_dp)
+        all_list = dict_dp_list[max_dp]
         all_list = filter_component(all_list, 100, 5000)
         dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list = transform_component_to_atom(
             all_list)
@@ -188,20 +189,20 @@ def get_fit_pk(dir, dp):
         return fit_list
 
 
-def get_fit_pk(dir):
-    dir = dir + '.pk'
-    if os.path.exists(dir):
-        with open(dir, 'rb') as f:
-            data = pk.load(f)
-        return data
-    else:
-        all_list = enumerate_component(20)  # 枚举所有可能肝素分子的构成
-        # dict_dp_list = enumerate_dalteparin(dp)
-        # dict_dp_list = enumerate_enoxaparin(dp)
-        # all_list = dict_dp_list[dp]
-        all_list = filter_component(all_list, 100, 5000)
-        dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list = transform_component_to_atom(all_list)
-        point_list = get_all_isotope_distribute(all_atoms_list)
-        fit_list = fit_all_point(point_list, 4)
-        save_pk(fit_list, dir)
-        return fit_list
+# def get_fit_pk(dir):
+#     dir = dir + '.pk'
+#     if os.path.exists(dir):
+#         with open(dir, 'rb') as f:
+#             data = pk.load(f)
+#         return data
+#     else:
+#         all_list = enumerate_component(20)  # 枚举所有可能肝素分子的构成
+#         # dict_dp_list = enumerate_dalteparin(dp)
+#         # dict_dp_list = enumerate_enoxaparin(dp)
+#         # all_list = dict_dp_list[dp]
+#         all_list = filter_component(all_list, 100, 5000)
+#         dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list = transform_component_to_atom(all_list)
+#         point_list = get_all_isotope_distribute(all_atoms_list)
+#         fit_list = fit_all_point(point_list, 4)
+#         save_pk(fit_list, dir)
+#         return fit_list

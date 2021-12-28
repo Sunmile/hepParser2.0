@@ -3,8 +3,10 @@ import pandas as pd
 import copy
 import os
 import pickle as pk
-from src.utils import *
-from src.atom_mass import *
+from src.utils import save_pk
+from src.utils import transform_component_to_atom
+
+from src.atom_mass import dict_atom
 
 
 # 考虑所有可能的肝素组成，返回所有肝素组成式
@@ -68,11 +70,24 @@ def enumerate_enoxaparin(dp):
         [1, 0, 1, 1, 3, 0, 0],
         [1, 0, 0, 0, 1, 1, 0],
         [1, 0, 0, 0, 2, 1, 0],
+        [0, 1, 1, 0, 0, 0, 0],
+        [0, 1, 1, 0, 1, 0, 0],
+        [0, 1, 1, 0, 2, 0, 0],
+        [0, 1, 1, 0, 3, 0, 0],
+        [0, 1, 1, 0, 4, 0, 0],
+        [0, 1, 1, 1, 0, 0, 0],
+        [0, 1, 1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 2, 0, 0],
+        [0, 1, 1, 1, 3, 0, 0],
+        # [0, 1, 0, 0, 1, 1, 0], ## 这两个为左边饱和，右边不饱和，目前不存在类似结构
+        # [0, 1, 0, 0, 2, 1, 0]
     ]  # dp为2时可能 list
     dict_dp_comp[2]=dp2
     dp1l = [
         [1, 0, 0, 0, 0, 0, 0],
         [1, 0, 0, 0, 1, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 1, 0, 0]
     ]  # dp为1且保留左侧
     dp1r = [
         [0, 0, 0, 0, 1, 1, 0],
@@ -187,79 +202,32 @@ def enumerate_dalteparin(dp):
     return dict_dp_comp
 
 
-# 根据分子式计算分子质量
-def get_molecular_mass(atom_list):
-    Mass = 0
-    atom_mass = [dict_atom['H1'], dict_atom['C12'], dict_atom['N14'],
-                 dict_atom['O16'], dict_atom['S32'], dict_atom['Na']]
-    for i in range(len(atom_list)):
-        Mass += atom_mass[i] * atom_list[i]
-    return np.round(Mass, 5)
+
+# def save_pk(data, dir):
+#     with open(dir, 'wb') as f:
+#         pk.dump(data, f)
 
 
-def get_component_mass(one_comp):
-    comp_atoms = [
-        [8, 6, 0, 6, 0],  # 不饱和糖醛酸 HexA
-        [10, 6, 0, 7, 0],  # 饱和糖醛酸  GlcA
-        [13, 6, 1, 5, 0],  # 葡萄糖胺   GlcN
-        [4, 2, 0, 2, 0],  # 乙酰基    Ac
-        [2, 0, 0, 4, 1],  # 硫酸基    SO3
-        [11, 6, 1, 4, 0],  # 内醚糖    Levoglucosan
-        [12, 6, 0, 5, 0]  # 甘露糖(dicp jin)    Man
-    ]
-    comp_atoms = np.array(comp_atoms)
-    tmp_atoms = np.array([2, 0, 0, 1, 0])  # 带一个水
-    H2O = np.array([2, 0, 0, 1, 0])  # 任两个基团结合，都脱一个水
-    for i in range(len(one_comp)):
-        tmp_atoms = tmp_atoms + comp_atoms[i] * one_comp[i] - H2O * one_comp[i]
-    mass = get_molecular_mass(tmp_atoms)
-    tmp_atoms = tmp_atoms.tolist()
-    return np.round(mass, 5), tmp_atoms
-
-
-def transform_component_to_atom(all_list):
-    dict_mass_comp = {}
-    dict_mass_atom = {}
-    all_atoms_list = []
-    all_mass_list = []
-    count = 0
-    for x in all_list:
-        mass, tmp_atoms = get_component_mass(x)
-        all_atoms_list.append(tmp_atoms)
-        all_mass_list.append(mass)
-        if mass in dict_mass_atom.keys():
-            print('There are two candidates with same mass!')
-            print(x)
-            print(dict_mass_comp[mass])
-            print(tmp_atoms)
-            print(dict_mass_atom[mass])
-
-            dict_mass_atom[mass].append(tmp_atoms)
-            dict_mass_comp[mass].append(x)
-
-        else:
-            dict_mass_comp[mass] = [x]
-            dict_mass_atom[mass] = [tmp_atoms]
-        count += 1
-        print(count, mass, x)
-    return dict_mass_comp, dict_mass_atom, all_list, all_atoms_list, all_mass_list
-
-
-def get_comp_pk(dir,dp):
-    dir = dir + str(dp)+'.pk'
+def get_comp_pk(dir, min_dp=2, max_dp=20):
+    dir = dir + str(max_dp)+'.pk'
     if os.path.exists(dir):
         with open(dir, 'rb') as f:
-            data = pk.load(f)
-        return data
+            dict_dp_list = pk.load(f)
     else:
         # all_list = enumerate_component(20)  # 枚举所有可能肝素分子的构成
         # dict_dp_list = enumerate_dalteparin(dp)
-        dict_dp_list = enumerate_enoxaparin(dp)
-        all_list = dict_dp_list[dp]
-        # all_list = filter_component(all_list, 100, 5000)
-        dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list = transform_component_to_atom(
-            all_list)
-        result = [dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list]
-        save_pk(result, dir)
-        return result
+        dict_dp_list = enumerate_enoxaparin(max_dp)
+        save_pk(dict_dp_list, dir)
+    all_list = dict_dp_list[min_dp].copy()
+    for i in range(min_dp+1,max_dp+1):
+        all_list.extend(dict_dp_list[i])
+    # all_list = filter_component(all_list, 100, 5000)
+    dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list = transform_component_to_atom(
+        all_list)
+    result = [dict_mass_comp, dict_mass_atom, all_comp_list, all_atoms_list, all_mass_list]
+    return result
 
+#
+# if __name__ == '__main__':
+#     test = 'ffesdf'
+#     get_comp_pk('1243',2,6)

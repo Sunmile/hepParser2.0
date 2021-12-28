@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
 import copy
-from src.enumerate import *
+from src.atom_mass import dict_atom
 import pickle as pk
-
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def read_spectra(dir):
     MZ_int = []
@@ -207,3 +208,133 @@ def get_total_intensity(filter_mz, max_int):
     total_int = np.round(total_int / max_int * 100, 4)
     return total_int
 
+# 根据分子式计算分子质量
+def get_molecular_mass(atom_list):
+    Mass = 0
+    atom_mass = [dict_atom['H1'], dict_atom['C12'], dict_atom['N14'],
+                 dict_atom['O16'], dict_atom['S32'], dict_atom['Na']]
+    for i in range(len(atom_list)):
+        Mass += atom_mass[i] * atom_list[i]
+    return np.round(Mass, 5)
+
+
+def get_component_mass(one_comp):
+    comp_atoms = [
+        [8, 6, 0, 6, 0],  # 不饱和糖醛酸 HexA
+        [10, 6, 0, 7, 0],  # 饱和糖醛酸  GlcA
+        [13, 6, 1, 5, 0],  # 葡萄糖胺   GlcN
+        [4, 2, 0, 2, 0],  # 乙酰基    Ac
+        [2, 0, 0, 4, 1],  # 硫酸基    SO3
+        [11, 6, 1, 4, 0],  # 内醚糖    Levoglucosan
+        [12, 6, 0, 5, 0]  # 甘露糖(dicp jin)    Man
+    ]
+    comp_atoms = np.array(comp_atoms)
+    tmp_atoms = np.array([2, 0, 0, 1, 0])  # 带一个水
+    H2O = np.array([2, 0, 0, 1, 0])  # 任两个基团结合，都脱一个水
+    for i in range(len(one_comp)):
+        tmp_atoms = tmp_atoms + comp_atoms[i] * one_comp[i] - H2O * one_comp[i]
+    mass = get_molecular_mass(tmp_atoms)
+    tmp_atoms = tmp_atoms.tolist()
+    return np.round(mass, 5), tmp_atoms
+
+
+def transform_component_to_atom(all_list):
+    dict_mass_comp = {}
+    dict_mass_atom = {}
+    all_atoms_list = []
+    all_mass_list = []
+    count = 0
+    for x in all_list:
+        mass, tmp_atoms = get_component_mass(x)
+        all_atoms_list.append(tmp_atoms)
+        all_mass_list.append(mass)
+        if mass in dict_mass_atom.keys():
+            print('There are two candidates with same mass!')
+            print(x)
+            print(dict_mass_comp[mass])
+            print(tmp_atoms)
+            print(dict_mass_atom[mass])
+
+            dict_mass_atom[mass].append(tmp_atoms)
+            dict_mass_comp[mass].append(x)
+
+        else:
+            dict_mass_comp[mass] = [x]
+            dict_mass_atom[mass] = [tmp_atoms]
+        count += 1
+        # print(count, mass, x)
+    return dict_mass_comp, dict_mass_atom, all_list, all_atoms_list, all_mass_list
+
+
+def draw(dir, r2, exp_sp, fig_dir):
+    max_int = max(exp_sp[:, 1])
+    an_01 = pd.read_excel(dir)
+    plt.figure(figsize=(7, 4), dpi=250)
+    lw1 = 0.5
+    lw2 = 0.5
+    for i in range(an_01.shape[0]):
+        x = an_01.loc[i, 'mz']
+        y1 = an_01.loc[i, 'exp_int']
+        y2 = an_01.loc[i, 'the_int']
+        w = an_01.loc[i, 'weight']
+        w = w[1:-1]
+        w_list = w.split(', ')
+        if y2>0:
+            w_list = [np.float(x) for x in w_list]
+        if len(w_list) ==1:
+            plt.plot([x, x], [0, -y2], lw=lw2, c='b', zorder=2)
+        elif len(w_list) == 2:
+            tmp_y1 = y2 * (w_list[0]/sum(w_list))
+            tmp_y2 = y2 * (w_list[1]/sum(w_list))
+            plt.plot([x, x], [0, -tmp_y1], lw=lw2, c='r', zorder=2)
+            plt.plot([x, x], [-tmp_y1, -y2], lw=lw2, c='b', zorder=2)
+        elif len(w_list) == 3:
+            tmp_y1 = y2 * (w_list[0]/sum(w_list))
+            tmp_y2 = y2 * (w_list[1]/sum(w_list))
+            tmp_y3 = y2 * (w_list[2]/sum(w_list))
+            plt.plot([x, x], [0, -tmp_y1], lw=lw2, c='r', zorder=2)
+            plt.plot([x, x], [-tmp_y1, -tmp_y1-tmp_y2], lw=lw2, c='b', zorder=2)
+            plt.plot([x, x], [-tmp_y1-tmp_y2, -y2], lw=lw2, c='#ffe66d', zorder=2)
+        else:
+            print('There are ',str(len(w_list)), ' components can explain peak ',str(x))
+            plt.plot([x, x], [0, -y2], lw=lw2, c='b', zorder=2)
+    for i in range(len(exp_sp)):
+        x = exp_sp[i, 0]
+        y = exp_sp[i, 1]/max_int * 100
+        plt.plot([x, x], [0, y], lw=lw1, c='grey', zorder=1)
+    sns.despine()
+    plt.plot([0, 0], [0, 0], lw=lw1, c='grey', label='Exp_sp')
+    plt.plot([0, 0], [0, 0], lw=lw2, c='b', label='The_sp')
+    plt.plot([200, 1200], [0, 0], lw=0.5, c='k')
+
+    plt.xlim(200, 1200)
+    plt.ylim(-100, 100)
+    plt.xticks(fontsize=9)
+    plt.yticks(fontsize=9)
+    plt.xlabel('m/z', fontsize=10)
+    plt.ylabel('Relative Intensity',fontsize=10)
+    plt.legend(frameon=False, fontsize=8)
+    plt.title('R square=' + str(np.round(r2, 5)),fontsize=10)
+    plt.savefig(fig_dir)
+    plt.show()
+
+
+if __name__ == '__main__':
+    dir = './../data/annotate_BEH5_0.1.csv'
+    draw(dir)
+    # y = [79.12205786,70.10151105,42.24685991,27.98468934,17.22269964,11.28688745]
+    # y2 = [78.9214,70.2802,42.5167,28.3007,18.071,11.6137]
+    # x = [0,1,2,3,4,5]
+
+    # y = [88.03543732,99.03938312,20.61357166,40.83050654,8.621136652,17.72581981,3.629045612]
+    # y2 = [87.4233,100,21.0062,41.6055,8.778,18.9312,3.5018]
+    # x = [0,1,2,3,4,5,6]
+    # plt.figure(figsize=(6, 3), dpi=250)
+    # for i in range(len(y)):
+    #     plt.plot([x[i], x[i]],[0, -y[i]], color='b')
+    #     plt.plot([x[i], x[i]],[0, y2[i]], color='grey')
+    #
+    # plt.plot([-1,7],[0,0],color='k')
+    # sns.despine()
+    # # plt.plot(x,y)
+    # plt.show()

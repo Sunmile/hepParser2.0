@@ -392,6 +392,8 @@ def get_labels(label_info, peak_dict, lose_ion, new_key_with_order, is_HNa='H'):
         # score_list.append(line[4])
         th_list.append(line[6])
     hna_list = np.array(hna_list)
+    # if len(hna_list)==0:
+    #     hna_list.append([0,0])
     return xy, mass_label, mass_struct_tips, right_comp, struct_id, \
            (mass_list,int_list, z_list,hna_list,the_mz_list, th_list, comp_list, lose_list, the_mass_list), new_labels
 

@@ -1,13 +1,17 @@
-from src.peak_align import *
-from src.isotopic_detect import *
-from src.match_score import *
-from src.label import *
-from src.significance_test import *
+from time import time
+import pandas as pd
+import numpy as np
+from src.peak_align import align_peak
+from src.utils import save_pk, get_total_intensity,get_exp_isp
+from src.isotopic_detect import get_isotopic, get_fit_pk
+from src.match_score import calculate_all_hp_score
+from src.theory_sp import get_the_sp
+from src.label import get_most_power_candidate_score, get_n_label
+from src.significance_test import get_probability, get_pvalue
+from src.enumerate import get_comp_pk
+from src.preprocess import pre_process_data
 
 def get_filter_MZ(origin_MZ, max_int, fit_list, the_HP, the_sp_path, max_ion=7, ppm=20, bound_th=0.001, bound_intensity=0, is_HNa='H'):
-    from src.preprocess import pre_process_data
-    # 因为2个文件相互引用了，所以在这里import
-
     s = time()
     top_n = 5
     isp_thresh = 0.5
@@ -16,6 +20,12 @@ def get_filter_MZ(origin_MZ, max_int, fit_list, the_HP, the_sp_path, max_ion=7, 
     print('read:', t0 - s)
     filter_MZ, max_int = pre_process_data(origin_MZ, max_int, fit_list, ppm, bound_th,
                                           bound_intensity)
+    # get one spectrum to test
+    # sp_data =pd.read_csv('./data/BEH_peak5.csv',header=None)
+    # sp_data =pd.read_csv('./data/fitting/X1_merged.csv',header=None)
+    # filter_MZ = np.array(sp_data)
+    # max_int = np.max(sp_data.iloc[:,1])
+    # end test
     total_int = get_total_intensity(filter_MZ, max_int)
     # save_file(filter_MZ, 'data/filter_MZ')
     t1 = time()
@@ -36,6 +46,8 @@ def get_filter_MZ(origin_MZ, max_int, fit_list, the_HP, the_sp_path, max_ion=7, 
     for i in range(0, len(peaks)):
         peaks[i][0] = np.round(peaks[i][0] + delta, 5)
     filter_MZ = peaks
+    save_test = pd.DataFrame(filter_MZ)
+    save_test.to_csv('data/aligned_'+str(delta)+'.csv', header=True, index=None)
     return filter_MZ, max_int, total_int, exp_isp, the_spectra, dict_list
 
 

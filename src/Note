@@ -36,7 +36,7 @@
             len = the number of the theoretical isotopic clusters
             type = list
             the_spectra[2][0][0]: the charge state of the first isotopic cluster
-    the_spectra[3]: the sites of each isotopic list of all component
+    the_spectra[3]: the sites of each isotopic list of all component ('site' mean the (m/z*10)-100, was used in rough score)
         len = the number of component
         type = list
         the_spectra[3][0]: the sites of each m/z of the first component

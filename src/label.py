@@ -1,6 +1,5 @@
 import numpy as np
-import pandas as pd
-from src.utils import *
+from src.utils import get_high_peak
 
 
 def get_n_label(match_list, total_int, candidate_sort_index, n):

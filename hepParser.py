@@ -12,7 +12,8 @@ from candidate_dialog import QmyDialogSize, QAnalyseBar, pbar_str, DPstepBar
 from spectra_tools import *
 from Hp_opt import get_filter_MZ
 from src.utils import save_file
-from src.isotopic_detect import get_fit_pk, get_comp_pk
+from src.isotopic_detect import get_fit_pk
+from src.enumerate import get_comp_pk
 from PIL import Image
 from mzML_parser import *
 from draw_3D import *
@@ -153,12 +154,13 @@ class MainWindow(QMainWindow):
 
     def _init_data(self):
         s = time.time()
-        self.dp = 4
+        self.min_dp = 4
+        self.max_dp = 20
         self.DATA0 = 'data/plot0_005_tic.pk'
         self.data_3d_file_name = 'data/plot0_005_smooth_tic.pk'
-        self.fit_list = get_fit_pk('data/Isotope_dist_fit')
-        self.the_HP = get_comp_pk('data/enox_',self.dp)  # 枚举的理论肝素结构
-        self.the_SP_path = 'data/enox_'+str(self.dp)+'_sp_0.1_noloss_'
+        self.fit_list = get_fit_pk('data/Isotope_dist_fit',0)
+        self.the_HP = get_comp_pk('data/enox_',self.min_dp, self.max_dp)  # 枚举的理论肝素结构
+        self.the_SP_path = 'data/enox_'+str(self.min_dp)+'_'+str(self.max_dp)+'_sp_0.1_noloss_'
         self.str_num = len(self.the_HP[2])
         self.peak_dict = {}  # 保存实验谱mz->absolute intensity
 
@@ -723,7 +725,7 @@ class MainWindow(QMainWindow):
             max_int=self.maxIntensity,
             fit_list=self.fit_list,
             the_HP=self.the_HP,
-            the_sp_path = self.the_SP_path,
+            the_sp_path=self.the_SP_path,
             max_ion=self.max_ion,
             ppm=self.ppm,
             bound_th=self.bound_th,
@@ -1139,8 +1141,8 @@ class MainWindow(QMainWindow):
                                      dict_list=self.dict_list, the_HP=self.the_HP,
                                      ppm=self.ppm, bound_th=self.bound_th,
                                      bound_intensity=self.bound_intensity,
-                                     min_dp=self.dp,
-                                     max_dp=self.dp
+                                     min_dp=self.dp_min,
+                                     max_dp=self.dp_max
                                      )
         self.dataThread.sinID.connect(self.updateDataProcessBar)
         self.dataThread.sinDataInfo.connect(self.infoParseProcess)
@@ -1181,9 +1183,10 @@ class MainWindow(QMainWindow):
         self.figFlag[0] = 3
 
         self.ppm = int(self.edit_ppm.text())
-        self.dp = int(self.dp_min.text())
-        self.the_HP = get_comp_pk('data/enox_',self.dp)  # 枚举的理论肝素结构
-        self.the_SP_path = 'data/enox_'+str(self.dp)+'_sp_0.1_noloss_'
+        self.min_dp = int(self.dp_min.text())
+        self.max_dp = int(self.dp_max.text())
+        self.the_HP = get_comp_pk('data/enox_',self.min_dp, self.max_dp)  # 枚举的理论肝素结构
+        self.the_SP_path = 'data/enox_' + str(self.min_dp) + '_' + str(self.max_dp) + '_sp_0.1_noloss_'
         self.str_num = len(self.the_HP[2])
         self.peak_dict = {}  # 保存实验谱mz->absolute intensity
         self.load_merged_peaks()
@@ -1249,7 +1252,7 @@ class MainWindow(QMainWindow):
         if self.figFlag[0] < 3:
             QMessageBox.information(self, "Message", "请先加载数据，然后选谱分析")
         else:
-            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "Download component", 'result/XBridge_Amide/1_ppm50_Na.xlsx', #XBridge_Amide
+            selectedDir, filtUsed = QFileDialog.getSaveFileName(self, "Download component", 'data/fitting/1_ppm50_Na.xlsx', #XBridge_Amide
                                                                 "*.xlsx;;All Files(*)")
             if selectedDir != '':
                 save_com = np.array(self.struct_df['components'])

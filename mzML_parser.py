@@ -6,6 +6,7 @@ import time
 import numpy as np
 import pickle as pk
 import threading
+from src.utils import save_pk
 
 
 class Peak:
@@ -259,6 +260,8 @@ def get_merged_peaks(xml_path, start_scan, end_scan):
     root = DOMTree.documentElement
     spectrums = root.getElementsByTagName("spectrum")
     mz_inten = {}
+    mz_merge_list = []
+    int_merge_list = []
     peaks = []
     max_inten = 0
     t = time.time()
@@ -278,13 +281,16 @@ def get_merged_peaks(xml_path, start_scan, end_scan):
         t1 = time.time()
         print("parser_range_peaks", t1 - t0)
         mz_list = np.round(np.array(mz_list), 4)
+        mz_merge_list.append(mz_list)
+        int_merge_list.append(inten_list)
         for (new_mz, inten) in zip(mz_list, inten_list):
             if new_mz not in mz_inten.keys():
                 mz_inten[new_mz] = 0
             mz_inten[new_mz] += inten
         t2 = time.time()
         print("merge", t2 - t1)
-
+    merge_sp = [mz_merge_list, int_merge_list]
+    save_pk(merge_sp, 'data/BEH_test_merge_all.pk')
     for key in mz_inten.keys():
         peaks.append([key, mz_inten[key]])
         max_inten = max(max_inten, mz_inten[key])

@@ -1,9 +1,12 @@
 import numpy as np
 import itertools
+import os
+import pickle as pk
 from collections import Counter as ct
-from src.atom_mass import *
+from src.atom_mass import dict_atom
 from brainpy import isotopic_variants
-from src.utils import *
+from src.utils import save_pk
+from src.utils import sort_the
 
 
 def generate_new_composition(filter_list, max_lost_count=20):
@@ -74,9 +77,9 @@ def generate_theory_SP(atom, component, prob=0.5, max_ion=5, is_HNa='H'):
             if is_HNa !='H':
                 add_mass = 0
                 if is_HNa =='HNa':
-                    add_mass =dict_atom['Na']-1
+                    add_mass =dict_atom['Na']-dict_atom['H1']
                 elif is_HNa == 'HNH4':
-                    add_mass =dict_atom['N14']+4*dict_atom['H1']-1
+                    add_mass =dict_atom['N14']+4*dict_atom['H1']-dict_atom['H1']
                 max_H = y[0]+y[1]+y[4] # 糖醛酸数目加硫酸根数目
                 for n in range(-j, max_H+1):
                     diff_mass = 0

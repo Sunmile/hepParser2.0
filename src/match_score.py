@@ -1,7 +1,8 @@
 import numpy as np
-from src.utils import *
-from src.theory_sp import *
+from src.utils import get_JS,get_exp_isp,sort_exp
+from src.theory_sp import change_sp_format, transform_the_01,compared_score
 from time import time
+import operator as op
 
 
 def score_match_isp(isp_1, isp_2, ppm):
@@ -30,6 +31,13 @@ def score_match_isp(isp_1, isp_2, ppm):
         win = ppm * mz_list1[i] * 0.000001
         if diff <= win:
             score_mz += diff / win + 0.1
+    the_ind = sorted(range(len(int_list1)),key=lambda k: int_list1[k], reverse=True)
+    exp_ind = sorted(range(len(int_list2)),key=lambda k: int_list2[k], reverse=True)
+    max_int_the = the_ind[0]
+    if not max_int_the==exp_ind[0]:
+        if int_list2[max_int_the]/max(int_list2)< 0.05:
+            score_all = 0
+            return score_all
     # score_int = cos_sim(int_list1,int_list2)
     score_int = int_weight * (1 - get_JS(int_list1, int_list2, 0.5, 0.5))
     # score_int = get_KL(int_list1,int_list2)
@@ -424,6 +432,8 @@ def calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int,chb_dA=False,
             # print(com_score)
             pass_count += 1
             continue
+        if one_comp[0]==0 and one_comp[-2]==1:
+            continue
         if chb_dA:
             if one_comp[0] >0:
                 pass_count += 1
@@ -439,9 +449,14 @@ def calculate_all_hp_score(the_spectra, dict_list, the_HP, max_int,chb_dA=False,
         tmp_dp= sum(one_comp)-one_comp[3]-one_comp[4]
         if tmp_dp < min_dp or tmp_dp> max_dp:
             pass_count += 1
+            print('filter dp',tmp_dp, one_comp)
             continue
+        # if i==102:
+        #     print(i)
         score, match_list, match_theo_list, score_list, score_mass, match_lost_list, match_z_list, match_HNa_list, \
             = match_isotopic(exp_isp, the_isp, ppm, thresh, min_match_num, lost_comp, Z_list,HNa_list, prob)
+        # if op.eq(one_comp,[0,2,2,0,4,0,0]):
+        #     print('x')
         if score > 0:
             dict_match_theo = {}
             for i in range(len(match_list)):

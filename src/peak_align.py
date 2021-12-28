@@ -121,7 +121,7 @@ def match_align(exp_isp, the_isp, ppm=10, standard_mz = 1000):
             counter = 0
             tmp_diff = []
             match_str = ''
-            win = ppm * the_item[0][0] * 3 * 0.000001
+            win = ppm * the_item[0][0] * 2 * 0.000001
             for aim_mz in the_item[0]:
                 match_flag = False
                 for k in range(counter, len(exp_item[0])):
